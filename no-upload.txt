@@ -1,0 +1,12 @@
+# List file globs that should not be uploaded by upload.sh
+no-upload.txt
+upload.sh
+server.rb
+Makefile
+*.aup
+.*
+*_data
+*.wav
+*.mmp
+screenshots
+src
