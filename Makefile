@@ -10,5 +10,5 @@
 %.ogg: %.wav
 	oggenc -q 1 $< -o $@
 
-main.js: src/*.ts
-	tsc --noImplicitAny --sourceMap --out $@ $^
+main.js main.js.map: src/*.ts
+	tsc --noImplicitAny --sourceMap --out main.js $^
