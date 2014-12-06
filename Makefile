@@ -11,4 +11,8 @@
 	oggenc -q 1 $< -o $@
 
 main.js main.js.map: src/*.ts
-	tsc --noImplicitAny --sourceMap --out main.js $^
+	tsc --sourceMap --out main.js $^
+
+.PHONY: watch
+watch:
+	while inotifywait -q src; do make -s main.js; done
