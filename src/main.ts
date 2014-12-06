@@ -9,6 +9,10 @@ window.requestAnimationFrame =
   window['mozRequestAnimationFrame'] ||
   function(callback) { window.setTimeout(callback, 1000 / 60); };
 
+function loadSound(name: string): Howl {
+  return new Howl({urls: [name + '.mp3', name + '.ogg']});
+}
+
 function loadImage(url: string) {
   var img = <HTMLImageElement>document.createElement('img');
   img.src = url;
@@ -21,7 +25,6 @@ class Sprite {
 }
 
 class Assets {
-  jump = new Howl({urls: ['jump.mp3', 'jump.ogg']});
   sprites = loadImage('sprites.png');
 
   underground = new Sprite(this.sprites, 0, 40, 80, 80, 40, 0);
@@ -32,6 +35,11 @@ class Assets {
 
   highlight = new Sprite(this.sprites, 0, 120, 80, 40, 40, 20);
   smoke = new Sprite(this.sprites, 0, 160, 20, 20, 10, 10);
+
+  click = loadSound('click');
+  build = loadSound('build');
+  buildRoad = loadSound('road');
+  destroy = loadSound('destroy');
 }
 
 class Particle {
@@ -89,6 +97,12 @@ class GameCtrl {
     $interval(this.save.bind(this), 1000); // Side effect: trigger digest loop once a second.
     $scope['speed'] = 1;
     $scope['build'] = null;
+    $scope.$watch('build', (newValue, oldValue) => {
+      if (newValue != oldValue) this.assets.click.play();
+    });
+    $scope.$watch('speed', (newValue, oldValue) => {
+      if (newValue != oldValue) this.assets.click.play();
+    });
 
     this.run();
   }
@@ -155,6 +169,7 @@ class GameCtrl {
     if (buildMode != null) {
       if (buildMode == CellType.DESTROY) {
         if (this.city.destroy(coord)) {
+          this.assets.destroy.play();
           this.shake(1);
           this.smoke(coord);
         }
@@ -163,7 +178,11 @@ class GameCtrl {
           switch (buildMode) {
             case CellType.HOUSE:
             case CellType.OFFICE:
+              this.assets.build.play();
               this.shake(1);
+              break;
+            case CellType.ROAD:
+              this.assets.buildRoad.play();
               break;
           }
           this.smoke(coord);

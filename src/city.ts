@@ -1,5 +1,4 @@
 /// <reference path="../typings/tsd.d.ts" />
-/// <reference path="heap.ts" />
 
 class Coord {
   constructor(public i: number, public j: number) {
