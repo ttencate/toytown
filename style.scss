@@ -6,7 +6,7 @@
 
 html {
   background: #223;
-  color: #ffe;
+  color: #ffd;
   font-family: Montserrat, sans-serif;
   margin: 0;
   padding: 20px;
@@ -20,27 +20,32 @@ body {
 }
 
 h1 {
-  font-size: 200%;
+  font-weight: bold;
+  font-size: 2rem;
+  line-height: 2rem;
+  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
   margin: 0;
   padding: 0;
 }
 
 #all {
   position: relative;
+  margin: auto;
 }
 
 #canvas {
 }
 
 .corner {
+  z-index: 0;
   position: absolute;
   width: 50rem;
   height: 30rem;
   padding: 1.5rem 2.5rem;
 }
 .corner:before {
-  position: absolute;
   z-index: -1;
+  position: absolute;
   display: block;
   content: '';
   border-style: solid;
@@ -50,7 +55,7 @@ h1 {
 }
 
 $cornerWidth: 45rem;
-$cornerHeight: 27rem;
+$cornerHeight: 22.5rem;
 $cornerColor: #112;
 
 .topleft, .topleft:before {
@@ -87,4 +92,29 @@ $cornerColor: #112;
 .bottomright:before {
   border-width: 0 0 $cornerHeight $cornerWidth;
   border-color: transparent transparent $cornerColor transparent;
+}
+
+footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  color: #445;
+  text-align: center;
+  font-size: 11px;
+  padding-bottom: 3px;
+  a {
+    color: #556;
+  }
+  a:hover {
+    color: #778;
+  }
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
 }
