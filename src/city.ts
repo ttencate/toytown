@@ -1,4 +1,5 @@
 /// <reference path="../typings/tsd.d.ts" />
+/// <reference path="util.ts" />
 
 class Coord {
   constructor(public i: number, public j: number) {
@@ -10,6 +11,13 @@ class Coord {
 
   offset(di: number, dj: number): Coord {
     return new Coord(this.i + di, this.j + dj);
+  }
+
+  neighbors(): Array<Coord> {
+    return [
+      this.offset(-1, 0), this.offset(1, 0),
+      this.offset(0, -1), this.offset(0, 1)
+    ];
   }
 
   equals(other: Coord): boolean {
@@ -42,7 +50,8 @@ class Cell {
   type = CellType.GRASS;
   stage = 0;
   population = 0;
-  jobs = 0;
+  employees: Array<Coord> = [];
+  jobs: Array<Coord> = [];
 
   maxPopulation(): number {
     if (this.type != CellType.HOUSE) {
@@ -58,9 +67,27 @@ class Cell {
     return JOB_STAGES[this.stage];
   }
 
+  vacancies(): number {
+    if (this.type != CellType.OFFICE) {
+      return 0;
+    }
+    return this.maxJobs() - this.employees.length;
+  }
+
   distance(): number {
     // This must never return < 1 or A* will be confused.
     return this.type == CellType.ROAD ? 1 : 10;
+  }
+
+  patchAfterLoad() {
+    for (var i = 0; i < this.employees.length; i++) {
+      var c = this.employees[i];
+      this.employees[i] = new Coord(c.i, c.j);
+    }
+    for (var i = 0; i < this.jobs.length; i++) {
+      var c = this.jobs[i];
+      this.jobs[i] = new Coord(c.i, c.j);
+    }
   }
   
   static DEFAULT = new Cell();
@@ -81,6 +108,7 @@ class City {
 
   population = 0;
   jobs = 0;
+  employments = 0;
 
   constructor() {
     this.grid = [];
@@ -104,6 +132,7 @@ class City {
     }
     var city = new City();
     copyInto(city, JSON.parse(json));
+    city.forEachCell(function(coord, cell) { cell.patchAfterLoad(); })
     city.updateStats();
     return city;
   }
@@ -120,6 +149,15 @@ class City {
 
   getCellOrDefault(coord: Coord): Cell {
     return this.getCell(coord) || Cell.DEFAULT;
+  }
+
+  forEachCell(callback: (coord: Coord, cell: Cell) => void) {
+    for (var i = 0; i < this.size; i++) {
+      for (var j = 0; j < this.size; j++) {
+        var coord = new Coord(i, j);
+        callback(coord, this.getCell(coord));
+      }
+    }
   }
 
   build(coord: Coord, type: CellType): boolean {
@@ -139,7 +177,14 @@ class City {
     cell.type = CellType.GRASS;
     cell.stage = 0;
     cell.population = 0;
-    cell.jobs = 0;
+    cell.jobs.forEach((job) => {
+      this.removeJob(coord, job);
+    });
+    cell.jobs = [];
+    cell.employees.forEach((employee) => {
+      this.removeJob(employee, coord);
+    });
+    cell.employees = [];
     return true;
   }
 
@@ -211,45 +256,93 @@ class City {
 
   // Public only for debugging.
   tickCell(coord: Coord) {
-    var FUDGE_FACTOR = Math.ceil(10 + 0.01 * (this.jobs + this.population));
+    var FUDGE_FACTOR = Math.ceil(4 + 0.01 * (this.jobs + this.population));
     var cell = this.getCell(coord);
+    // TODO shrink if things are going badly
     switch (cell.type) {
       case CellType.HOUSE:
+        // Immigration if there are enough jobs.
         var populationDemand = this.jobs - this.population + FUDGE_FACTOR;
         if (populationDemand > 0) {
           if (cell.stage < POPULATION_STAGES.length - 1
               && populationDemand >= POPULATION_STAGES[cell.stage + 1] - cell.population) {
             cell.stage++;
           }
-          if (populationDemand > 0 && cell.population < cell.maxPopulation()) {
-            cell.population = Math.min(cell.population + populationDemand, cell.maxPopulation());
+          cell.population = Math.min(cell.maxPopulation(), cell.population + Math.min(10, populationDemand));
+        }
+
+        // Fire some people randomly.
+        for (var i = 0; i < cell.jobs.length; i++) {
+          if (Math.random() < 0.01) {
+            this.removeJob(coord, cell.jobs[i]);
           }
+        }
+
+        // Go job hunting.
+        var unemployed = cell.population - cell.jobs.length;
+        for (var i = 0; i < unemployed; i++) {
+          this.findJob(coord);
         }
         break;
       case CellType.OFFICE:
-        var jobDemand = this.population - this.jobs + FUDGE_FACTOR;
+        var workerSupply = this.population - this.jobs + FUDGE_FACTOR;
         if (this.population - this.jobs > 0) {
           if (cell.stage < JOB_STAGES.length - 1
-              && jobDemand > JOB_STAGES[cell.stage + 1] - cell.jobs) {
+              && workerSupply > JOB_STAGES[cell.stage + 1] - cell.employees.length) {
             cell.stage++;
-          }
-          if (jobDemand > 0 && cell.jobs < cell.maxJobs()) {
-            cell.jobs = Math.min(cell.jobs + jobDemand, cell.maxJobs());
           }
         }
         break;
     }
   }
 
+  private addJob(employee: Coord, job: Coord) {
+    this.getCell(employee).jobs.push(job);
+    this.getCell(job).employees.push(employee);
+  }
+
+  private removeJob(employee: Coord, job: Coord) {
+    removeValue(this.getCell(employee).jobs, job);
+    removeValue(this.getCell(job).employees, employee);
+  }
+
+  private findJob(employee: Coord) {
+    var edge = [employee];
+    var edgeSet = {}; edgeSet[employee.toString()] = true;
+    var visited = {};
+    var attempts = 0;
+    while (edge.length && attempts < 100) {
+      attempts++;
+
+      var current = removeRandom(edge);
+      delete edgeSet[current.toString()];
+
+      var cell = this.getCell(current);
+      if (!cell) continue;
+
+      visited[current.toString()] = true;
+      if (cell.vacancies() > 0) {
+        this.addJob(employee, current);
+        return;
+      }
+
+      current.neighbors().forEach((neighbor) => {
+        if (!visited[neighbor.toString()] && !edgeSet[neighbor.toString()]) {
+          edge.push(neighbor);
+          edgeSet[neighbor.toString()] = true;
+        }
+      });
+    }
+  }
+
   private updateStats() {
     this.population = 0;
     this.jobs = 0;
-    for (var i = 0; i < this.size; i++) {
-      for (var j = 0; j < this.size; j++) {
-        var cell = this.grid[i][j];
-        this.population += cell.population;
-        this.jobs += cell.jobs;
-      }
-    }
+    this.employments = 0;
+    this.forEachCell((coord, cell) => {
+      this.population += cell.population;
+      this.jobs += cell.maxJobs();
+      this.employments += cell.employees.length;
+    });
   }
 }

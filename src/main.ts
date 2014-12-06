@@ -231,7 +231,7 @@ class GameCtrl {
 
   private frame() {
     var now = Date.now();
-    var delta = (now - this.lastFrame) / 1000;
+    var delta = Math.min(0.2, (now - this.lastFrame) / 1000);
     this.lastFrame = now;
 
     if (this.speed() > 0) {
@@ -240,6 +240,10 @@ class GameCtrl {
       while (this.accumulator > 1/ticksPerSecond) {
         this.accumulator -= 1/ticksPerSecond;
         this.city.tick();
+        if ((Date.now() - this.lastFrame / 1000) > 0.2) {
+          this.accumulator = 0;
+          break;
+        }
       }
     } else {
       this.accumulator = 0;
