@@ -1,5 +1,10 @@
 /// <reference path="../typings/tsd.d.ts" />
 
+class Coord {
+  i: number;
+  j: number;
+}
+
 enum CellType {
   GRASS,
   HOUSE,
@@ -11,15 +16,14 @@ class Cell {
 }
 
 class City {
-  width = 32;
-  height = 32;
+  size = 24;
   grid: Array<Array<Cell>>;
 
   constructor() {
     this.grid = [];
-    for (var i = 0; i < this.height; i++) {
+    for (var i = 0; i < this.size; i++) {
       this.grid[i] = [];
-      for (var j = 0; j < this.width; j++) {
+      for (var j = 0; j < this.size; j++) {
         var cell = new Cell();
         cell.type = CellType.GRASS;
         cell.variant = 0;
