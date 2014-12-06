@@ -14,6 +14,13 @@ function removeValue(array: Array<Equatable>, value: Equatable) {
   }
 }
 
+function removeReference<T>(array: Array<T>, value: T) {
+  var index = array.indexOf(value);
+  if (index >= 0) {
+    array.splice(index, 1);
+  }
+}
+
 function removeRandom<T>(array: Array<T>) {
   var index = Math.floor(array.length * Math.random());
   var item = array[index];

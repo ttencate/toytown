@@ -171,7 +171,7 @@ class GameCtrl {
         if (this.city.destroy(coord)) {
           this.assets.destroy.play();
           this.shake(1);
-          this.smoke(coord);
+          this.smoke(coord, 4);
         }
       } else {
         if (this.city.build(coord, buildMode)) {
@@ -185,7 +185,7 @@ class GameCtrl {
               this.assets.buildRoad.play();
               break;
           }
-          this.smoke(coord);
+          this.smoke(coord, 1);
         }
       }
     }
@@ -204,7 +204,7 @@ class GameCtrl {
     this.renderer.shakeOffset = 2 * amount;
   }
 
-  private smoke(coord: Coord) {
+  private smoke(coord: Coord, speed: number) {
     var particles = [];
     for (var i = 0; i < 20; i++) {
       var x = SPRITE_WIDTH / 2 * (Math.random() - 0.5);
@@ -212,17 +212,20 @@ class GameCtrl {
       var p = new Particle(this.assets.smoke);
       p.x = x;
       p.y = y;
-      p.vx = x;
-      p.vy = y - SPRITE_HEIGHT / 2;
+      p.vx = speed * x;
+      p.vy = speed * (y - SPRITE_HEIGHT / 2);
       p.scale = 0.5 + Math.random();
       p.vscale = 1;
       particles.push(p);
     }
-    this.particles[coord.toString()] = particles;
+    this.particles[coord.asString] = particles;
   }
 
   private lastFrame: number;
   private accumulator = 0;
+
+  ticksPerSecond: number;
+  private ticks: number;
 
   run() {
     this.lastFrame = Date.now();
@@ -232,6 +235,10 @@ class GameCtrl {
   private frame() {
     var now = Date.now();
     var delta = Math.min(0.2, (now - this.lastFrame) / 1000);
+    if (Math.floor(now / 1000) != Math.floor(this.lastFrame / 1000)) {
+      this.ticksPerSecond = this.ticks;
+      this.ticks = 0;
+    }
     this.lastFrame = now;
 
     if (this.speed() > 0) {
@@ -240,7 +247,8 @@ class GameCtrl {
       while (this.accumulator > 1/ticksPerSecond) {
         this.accumulator -= 1/ticksPerSecond;
         this.city.tick();
-        if ((Date.now() - this.lastFrame / 1000) > 0.2) {
+        this.ticks++;
+        if (Date.now() - this.lastFrame > 100) {
           this.accumulator = 0;
           break;
         }
@@ -321,7 +329,7 @@ class GameCtrl {
             (this.city.getCellOrDefault(coord.offset(1, 0)).type == CellType.ROAD ? 1 : 0) +
             (this.city.getCellOrDefault(coord.offset(0, -1)).type == CellType.ROAD ? 2 : 0));
     }
-    var particles = this.particles[coord.toString()];
+    var particles = this.particles[coord.asString];
     if (particles) {
       this.drawParticles(coord, particles);
     }
