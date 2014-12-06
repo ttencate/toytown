@@ -16,16 +16,16 @@
         <h1>TOYTOWN</h1>
 
         <div class="buttongroup">
-          <label class="button build house" ng-class="{selected: build == 'HOUSE'}" title="Build houses">
+          <label class="button build house" ng-class="{selected: build == 'HOUSE'}" title="Build houses" offable>
             <input type="radio" name="build" value="HOUSE" ng-model="build"/>
           </label>
-          <label class="button build office" ng-class="{selected: build == 'OFFICE'}" title="Build offices">
+          <label class="button build office" ng-class="{selected: build == 'OFFICE'}" title="Build offices" offable>
             <input type="radio" name="build" value="OFFICE" ng-model="build"/>
           </label>
-          <label class="button build road" ng-class="{selected: build == 'ROAD'}" title="Build roads">
+          <label class="button build road" ng-class="{selected: build == 'ROAD'}" title="Build roads" offable>
             <input type="radio" name="build" value="ROAD" ng-model="build"/>
           </label>
-          <label class="button build destroy" ng-class="{selected: build == 'DESTROY'}" title="Destroy buildings">
+          <label class="button build destroy" ng-class="{selected: build == 'DESTROY'}" title="Destroy buildings" offable>
             <input type="radio" name="build" value="DESTROY" ng-model="build"/>
           </label>
         </div>

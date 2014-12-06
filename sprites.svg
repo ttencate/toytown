@@ -254,9 +254,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4142135"
-     inkscape:cx="253.68793"
-     inkscape:cy="318.66378"
+     inkscape:zoom="3.9999998"
+     inkscape:cx="123.39585"
+     inkscape:cy="804.32556"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -2001,6 +2001,12 @@
        sodipodi:ry="10"
        d="m 60,540 a 20,10 0 1 1 -40,0 20,10 0 1 1 40,0 z"
        transform="translate(160,52.362183)" />
+    <path
+       sodipodi:nodetypes="ccccc"
+       style="color:#000000;fill:#0000ff;fill-opacity:0.25098039000000000;fill-rule:nonzero;stroke:#0000ff;stroke-width:2;stroke-miterlimit:4;stroke-opacity:0.50196078000000000;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="m 82,192.36219 38,-18 38,18 -38,17.99999 z"
+       id="path6206"
+       inkscape:connector-curvature="0" />
   </g>
   <g
      inkscape:groupmode="layer"

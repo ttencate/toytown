@@ -1,4 +1,5 @@
 /// <reference path="../typings/tsd.d.ts" />
+/// <reference path="heap.ts" />
 
 class Coord {
   constructor(public i: number, public j: number) {
@@ -11,6 +12,18 @@ class Coord {
   offset(di: number, dj: number): Coord {
     return new Coord(this.i + di, this.j + dj);
   }
+
+  equals(other: Coord): boolean {
+    return this.i == other.i && this.j == other.j;
+  }
+
+  manhattanDistance(other: Coord): number {
+    return Math.abs(this.i - other.i) + Math.abs(this.j - other.j);
+  }
+
+  static fromNumber(n: number, size: number): Coord {
+    return new Coord(Math.floor(n / size), n % size);
+  }
 }
 
 enum CellType {
@@ -19,6 +32,11 @@ enum CellType {
   HOUSE,
   OFFICE,
   ROAD,
+}
+
+class PathStep {
+  constructor(public distance: number, public next: Coord) {
+  }
 }
 
 class Cell {
@@ -39,6 +57,11 @@ class Cell {
       return 0;
     }
     return JOB_STAGES[this.stage];
+  }
+
+  distance(): number {
+    // This must never return < 1 or A* will be confused.
+    return this.type == CellType.ROAD ? 1 : 10;
   }
   
   static DEFAULT = new Cell();
@@ -91,11 +114,13 @@ class City {
   }
 
   getCell(coord: Coord): Cell {
-    return this.grid[coord.i][coord.j];
+    var row = this.grid[coord.i];
+    if (!row) return undefined;
+    return row[coord.j];
   }
 
   getCellOrDefault(coord: Coord): Cell {
-    return this.grid[coord.i][coord.j] || Cell.DEFAULT;
+    return this.getCell(coord) || Cell.DEFAULT;
   }
 
   build(coord: Coord, type: CellType): boolean {
@@ -117,6 +142,67 @@ class City {
     cell.population = 0;
     cell.jobs = 0;
     return true;
+  }
+
+  getShortestPath(from: Coord, to: Coord): Array<Coord> {
+    function heuristic(from: Coord, to: Coord) {
+      return from.manhattanDistance(to);
+    }
+
+    var gScore = {};
+    var fScore = {};
+    var closedSet = {};
+    var openSet = {};
+    // var heap = new BinaryHeap(function(coord) { return fScore[coord.toString()]; })
+    var cameFrom = {};
+
+    //heap.push(from);
+    openSet[from.toString()] = from;
+    gScore[from.toString()] = 0;
+    fScore[from.toString()] = heuristic(from, to);
+
+    var current;
+    while (openSet != {}) {
+      // current = heap.pop();
+      current = null;
+      for (var key in openSet) {
+        if (!current || fScore[key] < fScore[current.toString()]) {
+          current = openSet[key];
+        }
+      }
+      delete openSet[current.toString()];
+      if (current.equals(to)) {
+        var path = [to];
+        while (!to.equals(from)) {
+          to = cameFrom[to.toString()];
+          path.unshift(to);
+        }
+        return path;
+      }
+      closedSet[current.toString()] = true;
+      for (var i = 0; i < 4; i++) {
+        var neighbor = current.offset(i < 2 ? (i == 0 ? -1 : 1) : 0, i < 2 ? 0 : (i == 2 ? -1 : 1));
+        if (closedSet[neighbor.toString()]) {
+          continue;
+        }
+        var neighborCell = this.getCell(neighbor);
+        if (!neighborCell) {
+          continue;
+        }
+        var distToNeighbor = (this.getCell(current).distance() + neighborCell.distance()) / 2;
+        var tentativeGScore = gScore[current] + distToNeighbor;
+        if (!(neighbor.toString() in openSet) || tentativeGScore < gScore[neighbor.toString()]) {
+          cameFrom[neighbor.toString()] = current;
+          gScore[neighbor.toString()] = tentativeGScore;
+          fScore[neighbor.toString()] = tentativeGScore + heuristic(neighbor, to);
+          if (!openSet[neighbor.toString()]) {
+            // heap.push(neighbor);
+            openSet[neighbor.toString()] = neighbor;
+          }
+        }
+      }
+    }
+    return undefined;
   }
 
   tick() {

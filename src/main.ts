@@ -1,5 +1,6 @@
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="city.ts" />
+/// <reference path="dom.ts" />
 /// <reference path="renderer.ts" />
 
 window.requestAnimationFrame =
@@ -83,6 +84,7 @@ class GameCtrl {
     var all = $('#all');
     all.on('mousemove', this.mouseMove.bind(this));
     all.on('mousedown', this.mouseDown.bind(this));
+    all.on('mouseup', this.mouseUp.bind(this));
 
     $interval(this.save.bind(this), 1000); // Side effect: trigger digest loop once a second.
     $scope['speed'] = 1;
@@ -105,6 +107,7 @@ class GameCtrl {
     var coord = this.updateHighlight(e);
     if (coord && e.which == 1) {
       this.click(e, coord);
+      e.preventDefault();
     }
   }
 
@@ -116,11 +119,20 @@ class GameCtrl {
     }
   }
 
+  private mouseUp(e: MouseEvent) {
+    this.startPoint = null;
+    this.shortestPath = null;
+  }
+
   private updateHighlight(e: MouseEvent): Coord {
     var x = e.clientX - this.canvas.offset().left;
     var y = e.clientY - this.canvas.offset().top;
     return this.highlight = this.renderer.unproject(x, y);
   }
+
+  // For debugging.
+  private startPoint: Coord;
+  private shortestPath: Array<Coord>;
 
   private click(e: MouseEvent, coord: Coord) {
     // For debugging.
@@ -128,6 +140,17 @@ class GameCtrl {
       this.city.tickCell(coord);
       return;
     }
+
+    // For debugging.
+    if (e.ctrlKey) {
+      if (this.startPoint) {
+        this.shortestPath = this.city.getShortestPath(this.startPoint, coord);
+      } else {
+        this.startPoint = coord;
+      }
+      return;
+    }
+
     var buildMode = this.buildMode();
     if (buildMode != null) {
       if (buildMode == CellType.DESTROY) {
@@ -227,6 +250,11 @@ class GameCtrl {
 
     this.renderer.clear();
     this.backToFront(this.drawCell.bind(this));
+    if (this.shortestPath) {
+      for (var i = 0; i < this.shortestPath.length; i++) {
+        this.renderer.drawSprite(this.shortestPath[i], this.assets.highlight, 1);
+      }
+    }
     if (this.highlight && this.buildMode() != null) {
       this.renderer.drawSprite(this.highlight, this.assets.highlight);
     }
@@ -286,5 +314,6 @@ class GameCtrl {
 }
 
 angular.module('toytown', [])
-  .controller('GameCtrl', GameCtrl);
+  .controller('GameCtrl', GameCtrl)
+  .directive('offable', offable);
 angular.bootstrap(document, ['toytown']);
