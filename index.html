@@ -6,16 +6,54 @@
     <title>Toytown</title>
   </head>
   <body>
-    <div id="all">
+    <div id="all" ng-controller="GameCtrl as ctrl">
       <canvas id="canvas" width="500" height="300"></canvas>
-      <div class="corner topleft">
+      <div class="triangle topleft"></div>
+      <div class="triangle topright"></div>
+      <div class="triangle bottomleft"></div>
+      <div class="triangle bottomright"></div>
+      <div class="corner topleft ng-cloak">
         <h1>TOYTOWN</h1>
+
+        <div class="buttongroup">
+          <label class="button build house" ng-class="{selected: build == 'HOUSE'}" title="Build houses">
+            <input type="radio" name="build" value="HOUSE" ng-model="build"/>
+          </label>
+          <label class="button build office" ng-class="{selected: build == 'OFFICE'}" title="Build offices">
+            <input type="radio" name="build" value="OFFICE" ng-model="build"/>
+          </label>
+          <label class="button build road" ng-class="{selected: build == 'ROAD'}" title="Build roads">
+            <input type="radio" name="build" value="ROAD" ng-model="build"/>
+          </label>
+          <label class="button build destroy" ng-class="{selected: build == 'DESTROY'}" title="Destroy buildings">
+            <input type="radio" name="build" value="DESTROY" ng-model="build"/>
+          </label>
+        </div>
+
+        <a href="" ng-click="ctrl.reset()">Restart</a>
+
+        <div class="buttongroup">
+          <label class="button speed speed0" ng-class="{selected: speed == 0}" title="Pause">
+            <input type="radio" name="speed" value="0" ng-model="speed"/>
+          </label>
+          <label class="button speed speed1" ng-class="{selected: speed == 1}" title="Turtle speed">
+            <input type="radio" name="speed" value="1" ng-model="speed"/>
+          </label>
+          <label class="button speed speed2" ng-class="{selected: speed == 2}" title="Llama speed">
+            <input type="radio" name="speed" value="2" ng-model="speed"/>
+          </label>
+          <label class="button speed speed3" ng-class="{selected: speed == 3}" title="Cheetah speed">
+            <input type="radio" name="speed" value="3" ng-model="speed"/>
+          </label>
+        </div>
       </div>
-      <div class="corner topright">
+      <div class="corner topright ng-cloak">
       </div>
-      <div class="corner bottomleft">
+      <div class="corner bottomleft ng-cloak">
+        Jobs: {{ctrl.city.jobs | number}}<br>
+        Population: {{ctrl.city.population | number}}
       </div>
-      <div class="corner bottomright">
+      <div class="corner bottomright ng-cloak">
       </div>
     </div>
     <footer>

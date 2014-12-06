@@ -28,6 +28,69 @@ h1 {
   padding: 0;
 }
 
+.buttongroup {
+  font-size: 0;
+  & > * {
+    font-size: 1rem;
+  }
+}
+
+.button {
+  display: inline-block;
+  background: url(buttons.png);
+  cursor: pointer;
+
+  background-color: #445;
+
+  &:hover {
+    background-color: #556;
+  }
+
+  &.selected {
+    background-color: #ddb;
+  }
+}
+
+.build {
+  width: 60px;
+  height: 60px;
+  border-radius: 5px;
+  box-shadow: 1px 1px 4px rgba(255,255,240,0.5) inset, -1px -1px 4px rgba(0,0,0,0.7) inset;
+
+  &.selected {
+    box-shadow: -2px -2px 4px rgba(255,255,240,0.5) inset, 2px 2px 4px rgba(0,0,0,0.7) inset;
+  }
+}
+
+.house { background-position: 0 0; }
+.office { background-position: -60px 0; }
+.road { background-position: -120px 0; }
+.destroy { background-position: -240px 0; }
+
+.speed {
+  width: 30px;
+  height: 20px;
+  box-shadow: 1px 1px 2px rgba(255,255,240,0.2) inset, -1px -1px 2px rgba(0,0,0,0.5) inset;
+
+  &:active {
+    box-shadow: -1px -1px 2px rgba(255,255,240,0.5) inset, 1px 1px 2px rgba(0,0,0,0.7) inset;
+  }
+
+  &.selected {
+    box-shadow: -1px -1px 2px rgba(255,255,240,0.5) inset, 1px 1px 2px rgba(0,0,0,0.7) inset;
+  }
+}
+
+.speed0 { background-position: 0 -60px; border-radius: 5px 0 0 5px; }
+.speed1 { background-position: -30px -60px; }
+.speed2 { background-position: -60px -60px; }
+.speed3 { background-position: -90px -60px; border-radius: 0 5px 5px 0; }
+
+input[type="radio"] {
+  position: absolute;
+  left: -9999px;
+}
+
 #all {
   position: relative;
   margin: auto;
@@ -37,14 +100,10 @@ h1 {
 }
 
 .corner {
-  z-index: 0;
   position: absolute;
-  width: 50rem;
-  height: 30rem;
   padding: 1.5rem 2.5rem;
 }
-.corner:before {
-  z-index: -1;
+.triangle {
   position: absolute;
   display: block;
   content: '';
@@ -58,38 +117,38 @@ $cornerWidth: 45rem;
 $cornerHeight: 22.5rem;
 $cornerColor: #112;
 
-.topleft, .topleft:before {
+.topleft {
   top: 0;
   left: 0;
 }
-.topleft:before {
+.triangle.topleft {
   border-width: $cornerHeight $cornerWidth 0 0;
   border-color: $cornerColor transparent transparent transparent;
 }
 
-.topright, .topright:before {
+.topright {
   top: 0;
   right: 0;
 }
-.topright:before {
+.triangle.topright {
   border-width: 0 $cornerWidth $cornerHeight 0;
   border-color: transparent $cornerColor transparent transparent;
 }
 
-.bottomleft, .bottomleft:before {
+.bottomleft {
   bottom: 0;
   left: 0;
 }
-.bottomleft:before {
+.triangle.bottomleft {
   border-width: $cornerHeight 0 0 $cornerWidth;
   border-color: transparent transparent transparent $cornerColor;
 }
 
-.bottomright, .bottomright:before {
+.bottomright {
   bottom: 0;
   right: 0;
 }
-.bottomright:before {
+.triangle.bottomright {
   border-width: 0 0 $cornerHeight $cornerWidth;
   border-color: transparent transparent $cornerColor transparent;
 }

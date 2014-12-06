@@ -15,4 +15,4 @@ main.js main.js.map: src/*.ts
 
 .PHONY: watch
 watch:
-	while inotifywait -q src; do make -s main.js; done
+	while inotifywait -q -q -e close_write,move,create,delete src; do make -s main.js && echo 'Compilation successful'; done
