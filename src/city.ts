@@ -1,8 +1,12 @@
 /// <reference path="../typings/tsd.d.ts" />
 
 class Coord {
-  i: number;
-  j: number;
+  constructor(public i: number, public j: number) {
+  }
+
+  toString(): string {
+    return this.i + ',' + this.j;
+  }
 }
 
 enum CellType {
@@ -17,7 +21,7 @@ class Cell {
 
 class City {
   size = 24;
-  grid: Array<Array<Cell>>;
+  private grid: Array<Array<Cell>>;
 
   constructor() {
     this.grid = [];
@@ -30,5 +34,9 @@ class City {
         this.grid[i][j] = cell;
       }
     }
+  }
+
+  getCell(coord: Coord): Cell {
+    return this.grid[coord.i][coord.j];
   }
 }
