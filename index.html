@@ -48,15 +48,25 @@
         </div>
       </div>
       <div class="corner topright ng-cloak">
+        <div ng-if="ctrl.highlightedCell">
+          Inhabitants: {{ctrl.highlightedCell.population | number}}<br>
+          Employed: {{ctrl.highlightedCell.employers | number}}<br>
+          Capacity: {{ctrl.highlightedCell.maxPopulation() | number}}<br>
+          Employees: {{ctrl.highlightedCell.employees | number}}<br>
+          Jobs offered: {{ctrl.highlightedCell.maxJobs() | number}}<br>
+          Traffic: {{ctrl.highlightedCell.traffic | number}}<br>
+          Travel time: {{ctrl.highlightedCell.travelTime() | number}}
+        </div>
       </div>
       <div class="corner bottomleft ng-cloak">
-        {{ctrl.ticksPerSecond}} ticks/s<br>
+        {{ctrl.ticksPerSecond}} ticks/s | {{ctrl.framesPerSecond}} frames/s<br>
         <br>
         Jobs: {{ctrl.city.jobs | number}}<br>
         Employments: {{ctrl.city.employments | number}}<br>
         Population: {{ctrl.city.population | number}}
       </div>
       <div class="corner bottomright ng-cloak">
+        <span ng-mouseenter="ctrl.overlay = 'TRAFFIC'" ng-mouseleave="ctrl.overlay = null">Traffic</span>
       </div>
     </div>
     <footer>

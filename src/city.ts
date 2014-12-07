@@ -1,19 +1,42 @@
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="util.ts" />
 
-class Coord {
-  asString: string;
+var POPULATION_STAGES = [
+  0, 4, 8, 16, 32, 64, 128, 256
+];
 
-  constructor(public i: number, public j: number) {
-    this.asString = i + ',' + j;
+var JOB_STAGES = [
+  0, 16, 32, 64, 128, 256, 512, 1024
+];
+
+var DRIVE_TIME = 1;
+var WALK_TIME = 10;
+var TRAFFIC_FALLOFF = 200;
+var ROAD_CAPACITY = 250;
+var ROAD_SPEED_FALLOFF = 4;
+
+class Coord {
+  private static cache: {[key: string]: Coord} = {};
+
+  // DO NOT USE. Use the cache instead.
+  constructor(public i: number, public j: number, public asString: string) {
+  }
+
+  static of(i: number, j: number) {
+    var asString = i + ',' + j;
+    var coord = Coord.cache[asString];
+    if (!coord) {
+      coord = Coord.cache[asString] = new Coord(i, j, asString);
+    }
+    return coord;
   }
 
   static patch(c: {i: number; j: number}) {
-    return new Coord(c.i, c.j);
+    return Coord.of(c.i, c.j);
   }
 
   offset(di: number, dj: number): Coord {
-    return new Coord(this.i + di, this.j + dj);
+    return Coord.of(this.i + di, this.j + dj);
   }
 
   neighbors(): Array<Coord> {
@@ -23,16 +46,12 @@ class Coord {
     ];
   }
 
-  equals(other: Coord): boolean {
-    return this.i == other.i && this.j == other.j;
-  }
-
   manhattanDistance(other: Coord): number {
     return Math.abs(this.i - other.i) + Math.abs(this.j - other.j);
   }
 
   static fromNumber(n: number, size: number): Coord {
-    return new Coord(Math.floor(n / size), n % size);
+    return Coord.of(Math.floor(n / size), n % size);
   }
 }
 
@@ -45,7 +64,7 @@ enum CellType {
 }
 
 class PathStep {
-  constructor(public distance: number, public next: Coord) {
+  constructor(public travelTime: number, public next: Coord) {
   }
 }
 
@@ -57,8 +76,8 @@ class Cell {
   employers = 0;
   employees = 0;
 
-  oldTraffic = 0;
-  newTraffic = 0;
+  trafficSamples = 0;
+  traffic = 0;
 
   maxPopulation(): number {
     if (this.type != CellType.HOUSE) {
@@ -81,9 +100,13 @@ class Cell {
     return this.maxJobs() - this.employees;
   }
 
-  distance(): number {
+  travelTime(): number {
     // This must never return < 1 or A* will be confused.
-    return this.type == CellType.ROAD ? 1 : 10;
+    if (this.type == CellType.ROAD) {
+      return DRIVE_TIME / Math.max(0.1, Math.pow(Math.max(0, ROAD_CAPACITY - this.traffic) / ROAD_CAPACITY, 1 / ROAD_SPEED_FALLOFF));
+    } else {
+      return WALK_TIME;
+    }
   }
   
   static DEFAULT = new Cell();
@@ -138,19 +161,11 @@ class Contracts {
   }
 }
 
-var POPULATION_STAGES = [
-  0, 4, 8, 16, 32, 64, 128, 256
-];
-
-var JOB_STAGES = [
-  0, 8, 16, 32, 64, 128, 256, 512
-];
-
 class City {
   size = 20;
 
   private grid: Array<Array<Cell>>;
-  private contracts = new Contracts();
+  contracts = new Contracts();
 
   population = 0;
   jobs = 0;
@@ -200,7 +215,7 @@ class City {
   forEachCell(callback: (coord: Coord, cell: Cell) => void) {
     for (var i = 0; i < this.size; i++) {
       for (var j = 0; j < this.size; j++) {
-        var coord = new Coord(i, j);
+        var coord = Coord.of(i, j);
         callback(coord, this.getCell(coord));
       }
     }
@@ -212,9 +227,6 @@ class City {
       return false;
     }
     cell.type = type;
-    if (type == CellType.ROAD) {
-      this.invalidateRoutes();
-    }
     return true;
   }
 
@@ -222,9 +234,6 @@ class City {
     var cell = this.getCell(coord);
     if (cell.type == CellType.GRASS) {
       return false;
-    }
-    if (cell.type == CellType.ROAD) {
-      this.invalidateRoutes();
     }
     cell.type = CellType.GRASS;
     cell.stage = 0;
@@ -247,17 +256,14 @@ class City {
     var fScore = {};
     var closedSet = {};
     var openSet = {};
-    // var heap = new BinaryHeap(function(coord) { return fScore[coord.asString]; })
     var cameFrom = {};
 
-    //heap.push(from);
     openSet[from.asString] = from;
     gScore[from.asString] = 0;
     fScore[from.asString] = heuristic(from, to);
 
     var current;
     while (openSet != {}) {
-      // current = heap.pop();
       current = null;
       for (var key in openSet) {
         if (!current || fScore[key] < fScore[current.asString]) {
@@ -265,9 +271,9 @@ class City {
         }
       }
       delete openSet[current.asString];
-      if (current.equals(to)) {
+      if (current == to) {
         var path = [to];
-        while (!to.equals(from)) {
+        while (to != from) {
           to = cameFrom[to.asString];
           path.unshift(to);
         }
@@ -283,14 +289,13 @@ class City {
         if (!neighborCell) {
           continue;
         }
-        var distToNeighbor = (this.getCell(current).distance() + neighborCell.distance()) / 2;
-        var tentativeGScore = gScore[current] + distToNeighbor;
+        var distToNeighbor = (this.getCell(current).travelTime() + neighborCell.travelTime()) / 2;
+        var tentativeGScore = gScore[current.asString] + distToNeighbor;
         if (!(neighbor.asString in openSet) || tentativeGScore < gScore[neighbor.asString]) {
           cameFrom[neighbor.asString] = current;
           gScore[neighbor.asString] = tentativeGScore;
           fScore[neighbor.asString] = tentativeGScore + heuristic(neighbor, to);
           if (!openSet[neighbor.asString]) {
-            // heap.push(neighbor);
             openSet[neighbor.asString] = neighbor;
           }
         }
@@ -300,7 +305,8 @@ class City {
   }
 
   tick() {
-    this.tickCell(new Coord(Math.floor(Math.random() * this.size), Math.floor(Math.random() * this.size)));
+    this.tickCell(Coord.of(Math.floor(Math.random() * this.size), Math.floor(Math.random() * this.size)));
+    this.tickContract(pickRandom(this.contracts.asArray));
     this.updateStats();
   }
 
@@ -347,6 +353,17 @@ class City {
     }
   }
 
+  private tickContract(contract: Contract) {
+    if (!contract) return;
+    this.forEachCell((coord, cell) => {
+      cell.trafficSamples *= 1 - 1/TRAFFIC_FALLOFF;
+    });
+    var route = this.getShortestPath(contract.employee, contract.employer);
+    route.forEach((coord) => {
+      this.getCell(coord).trafficSamples++;
+    });
+  }
+
   private addContract(contract: Contract) {
     this.contracts.add(contract);
     this.getCell(contract.employee).employers++;
@@ -388,21 +405,14 @@ class City {
     }
   }
 
-  private invalidateRoutes() {
-    this.forEachCell(function(coord, cell) {
-      cell.oldTraffic = cell.newTraffic;
-      cell.newTraffic = 0;
-    });
-  }
-
   private updateStats() {
+    this.employments = this.contracts.asArray.length;
     this.population = 0;
     this.jobs = 0;
-    this.employments = 0;
     this.forEachCell((coord, cell) => {
       this.population += cell.population;
       this.jobs += cell.maxJobs();
-      this.employments += cell.employees;
+      cell.traffic = Math.round(cell.trafficSamples * this.employments / TRAFFIC_FALLOFF);
     });
   }
 }

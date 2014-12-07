@@ -43,7 +43,7 @@ class Renderer {
     y /= this.scale * SPRITE_HEIGHT / 2;
     var i = Math.round((x + y - 1 + this.city.size) / 2);
     var j = Math.round((x - y - 1 + this.city.size) / 2);
-    return i >= 0 && i < this.city.size && j >= 0 && j < this.city.size ? new Coord(i, j) : null;
+    return i >= 0 && i < this.city.size && j >= 0 && j < this.city.size ? Coord.of(i, j) : null;
   }
 
   private onResize() {

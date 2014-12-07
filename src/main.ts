@@ -34,6 +34,7 @@ class Assets {
   road = new Sprite(this.sprites, 0, 520, 80, 40, 40, 20);
 
   highlight = new Sprite(this.sprites, 0, 120, 80, 40, 40, 20);
+  overlay = new Sprite(this.sprites, 0, 680, 80, 40, 40, 20);
   smoke = new Sprite(this.sprites, 0, 160, 20, 20, 10, 10);
 
   click = loadSound('click');
@@ -76,9 +77,11 @@ class GameCtrl {
   private renderer: Renderer;
 
   city: City;
+  overlay: string = null;
 
   private shakeDelta: number = null;
   private highlight: Coord;
+  private highlightedCell: Cell;
   private particles: {[key: string]: Array<Particle>} = {};
 
   constructor(private $scope: ng.IScope, $interval) {
@@ -141,7 +144,13 @@ class GameCtrl {
   private updateHighlight(e: MouseEvent): Coord {
     var x = e.clientX - this.canvas.offset().left;
     var y = e.clientY - this.canvas.offset().top;
-    return this.highlight = this.renderer.unproject(x, y);
+    var oldHighlight = this.highlight;
+    this.highlight = this.renderer.unproject(x, y);
+    this.highlightedCell = this.highlight ? this.city.getCell(this.highlight) : null;
+    if (this.highlight != oldHighlight) {
+      this.$scope.$digest();
+    }
+    return this.highlight;
   }
 
   // For debugging.
@@ -224,8 +233,10 @@ class GameCtrl {
   private lastFrame: number;
   private accumulator = 0;
 
-  ticksPerSecond: number;
-  private ticks: number;
+  ticksPerSecond = 0;
+  private ticks = 0;
+  framesPerSecond = 0;
+  private frames = 0;
 
   run() {
     this.lastFrame = Date.now();
@@ -238,8 +249,11 @@ class GameCtrl {
     if (Math.floor(now / 1000) != Math.floor(this.lastFrame / 1000)) {
       this.ticksPerSecond = this.ticks;
       this.ticks = 0;
+      this.framesPerSecond = this.frames;
+      this.frames = 0;
     }
     this.lastFrame = now;
+    this.frames++;
 
     if (this.speed() > 0) {
       this.accumulator += delta;
@@ -286,7 +300,21 @@ class GameCtrl {
         this.renderer.drawSprite(this.shortestPath[i], this.assets.highlight, 1);
       }
     }
+    if (this.overlay) {
+      switch (this.overlay) {
+        case 'TRAFFIC':
+          this.backToFront((coord) => {
+            var cell = this.city.getCell(coord);
+            this.renderer.drawSprite(coord, this.assets.overlay,
+              Math.min(7, Math.ceil(7 * cell.traffic / ROAD_CAPACITY)));
+          });
+          break;
+      }
+    }
     if (this.highlight && this.buildMode() != null) {
+      this.city.contracts.byEmployee(this.highlight).forEach((contract) => {
+        this.renderer.drawSprite(contract.employer, this.assets.highlight, 1);
+      });
       this.renderer.drawSprite(this.highlight, this.assets.highlight);
     }
 
@@ -298,9 +326,9 @@ class GameCtrl {
     for (var y = -s + 1; y < this.city.size; y++) {
       for (var x = 0; x < s - Math.abs(y); x++) {
         if (y > 0) {
-          callback(new Coord(y + x, x));
+          callback(Coord.of(y + x, x));
         } else {
-          callback(new Coord(x, Math.abs(y) + x));
+          callback(Coord.of(x, Math.abs(y) + x));
         }
       }
     }
