@@ -55,7 +55,7 @@
           Employees: {{ctrl.highlightedCell.employees | number}}<br>
           Jobs offered: {{ctrl.highlightedCell.maxJobs() | number}}<br>
           Traffic: {{ctrl.highlightedCell.traffic | number}}<br>
-          Travel time: {{ctrl.highlightedCell.travelTime() | number}}
+          (Travel time: {{ctrl.highlightedCell.travelTime() | number}})
         </div>
       </div>
       <div class="corner bottomleft ng-cloak">
@@ -66,6 +66,9 @@
         Population: {{ctrl.city.population | number}}
       </div>
       <div class="corner bottomright ng-cloak">
+        <span ng-mouseenter="ctrl.overlay = 'OCCUPANCY'" ng-mouseleave="ctrl.overlay = null">Occupancy</span><br>
+        <span ng-mouseenter="ctrl.overlay = 'UNEMPLOYMENT'" ng-mouseleave="ctrl.overlay = null">Unemployment</span><br>
+        <span ng-mouseenter="ctrl.overlay = 'VACANCY'" ng-mouseleave="ctrl.overlay = null">Vacancies</span><br>
         <span ng-mouseenter="ctrl.overlay = 'TRAFFIC'" ng-mouseleave="ctrl.overlay = null">Traffic</span>
       </div>
     </div>

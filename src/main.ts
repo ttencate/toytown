@@ -302,6 +302,27 @@ class GameCtrl {
     }
     if (this.overlay) {
       switch (this.overlay) {
+        case 'OCCUPANCY':
+          this.backToFront((coord) => {
+            var cell = this.city.getCell(coord);
+            this.renderer.drawSprite(coord, this.assets.overlay,
+              Math.min(7, Math.ceil(7 * (1 - cell.population / cell.maxPopulation()))));
+          });
+          break;
+        case 'UNEMPLOYMENT':
+          this.backToFront((coord) => {
+            var cell = this.city.getCell(coord);
+            this.renderer.drawSprite(coord, this.assets.overlay,
+              Math.min(7, Math.ceil(7 * (1 - cell.employers / cell.population))));
+          });
+          break;
+        case 'VACANCY':
+          this.backToFront((coord) => {
+            var cell = this.city.getCell(coord);
+            this.renderer.drawSprite(coord, this.assets.overlay,
+              Math.min(7, Math.ceil(7 * (1 - cell.employees / cell.maxJobs()))));
+          });
+          break;
         case 'TRAFFIC':
           this.backToFront((coord) => {
             var cell = this.city.getCell(coord);
@@ -311,11 +332,17 @@ class GameCtrl {
           break;
       }
     }
-    if (this.highlight && this.buildMode() != null) {
-      this.city.contracts.byEmployee(this.highlight).forEach((contract) => {
-        this.renderer.drawSprite(contract.employer, this.assets.highlight, 1);
-      });
-      this.renderer.drawSprite(this.highlight, this.assets.highlight);
+    if (this.highlight) {
+      if (this.buildMode() == null) {
+        this.city.contracts.byEmployee(this.highlight).forEach((contract) => {
+          this.renderer.drawSprite(contract.employer, this.assets.highlight, 1);
+        });
+        this.city.contracts.byEmployer(this.highlight).forEach((contract) => {
+          this.renderer.drawSprite(contract.employee, this.assets.highlight, 2);
+        });
+      } else {
+        this.renderer.drawSprite(this.highlight, this.assets.highlight);
+      }
     }
 
     requestAnimationFrame(this.frame.bind(this));

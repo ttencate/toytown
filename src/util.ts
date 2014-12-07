@@ -4,7 +4,9 @@ function removeReference<T>(array: Array<T>, value: T) {
   var index = array.indexOf(value);
   if (index >= 0) {
     array.splice(index, 1);
+    return true;
   }
+  return false;
 }
 
 function removeRandom<T>(array: Array<T>) {

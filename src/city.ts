@@ -2,11 +2,11 @@
 /// <reference path="util.ts" />
 
 var POPULATION_STAGES = [
-  0, 4, 8, 16, 32, 64, 128, 256
+  0, 2, 4, 8, 16, 32, 64, 128
 ];
 
 var JOB_STAGES = [
-  0, 16, 32, 64, 128, 256, 512, 1024
+  0, 8, 16, 32, 64, 128, 256, 512
 ];
 
 var DRIVE_TIME = 1;
@@ -136,9 +136,9 @@ class Contracts {
   }
 
   remove(contract: Contract) {
-    removeReference(this.asArray, contract);
-    removeReference(this.byEmployer(contract.employer), contract);
-    removeReference(this.byEmployee(contract.employee), contract);
+    removeReference(this.asArray, contract) || console.error('missing in array', contract);
+    removeReference(this.byEmployer(contract.employer), contract) || console.error('missing in employer', contract);
+    removeReference(this.byEmployee(contract.employee), contract) || console.error('missing in employee', contract);
   }
 
   byEmployer(coord: Coord): Array<Contract> {
@@ -238,11 +238,11 @@ class City {
     cell.type = CellType.GRASS;
     cell.stage = 0;
     cell.population = 0;
-    this.contracts.byEmployee(coord).forEach((contract) => {
-      this.contracts.remove(contract);
+    this.contracts.byEmployee(coord).slice().forEach((contract) => {
+      this.removeContract(contract);
     });
-    this.contracts.byEmployer(coord).forEach((contract) => {
-      this.contracts.remove(contract);
+    this.contracts.byEmployer(coord).slice().forEach((contract) => {
+      this.removeContract(contract);
     });
     return true;
   }
@@ -312,13 +312,12 @@ class City {
 
   // Public only for debugging.
   tickCell(coord: Coord) {
-    var FUDGE_FACTOR = Math.ceil(4 + 0.01 * (this.jobs + this.population));
     var cell = this.getCell(coord);
     // TODO shrink if things are going badly
     switch (cell.type) {
       case CellType.HOUSE:
         // Immigration if there are enough jobs.
-        var populationDemand = this.jobs - this.population + FUDGE_FACTOR;
+        var populationDemand = this.jobs - this.population + Math.ceil(POPULATION_STAGES[1] + 0.01 * (this.jobs + this.population));
         if (populationDemand > 0) {
           if (cell.stage < POPULATION_STAGES.length - 1
               && populationDemand >= POPULATION_STAGES[cell.stage + 1] - cell.population) {
@@ -331,7 +330,7 @@ class City {
         var contracts = this.contracts.byEmployee(coord);
         for (var i = 0; i < contracts.length; i++) {
           if (Math.random() < 0.01) {
-            this.removeContract(contracts[i]);
+            // TODO this.removeContract(contracts[i]);
           }
         }
 
@@ -342,8 +341,8 @@ class City {
         }
         break;
       case CellType.OFFICE:
-        var workerSupply = this.population - this.jobs + FUDGE_FACTOR;
-        if (this.population - this.jobs > 0) {
+        var workerSupply = this.population - this.jobs + Math.ceil(JOB_STAGES[1] + 0.01 * (this.jobs + this.population));
+        if (workerSupply > 0) {
           if (cell.stage < JOB_STAGES.length - 1
               && workerSupply > JOB_STAGES[cell.stage + 1] - cell.employees) {
             cell.stage++;
@@ -371,9 +370,9 @@ class City {
   }
 
   private removeContract(contract: Contract) {
-    this.contracts.remove(contract);
     this.getCell(contract.employee).employers--;
     this.getCell(contract.employer).employees--;
+    this.contracts.remove(contract);
   }
 
   private findJob(employee: Coord) {
