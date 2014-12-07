@@ -3,6 +3,8 @@
 /// <reference path="dom.ts" />
 /// <reference path="renderer.ts" />
 
+var DEBUG = true; // TODO switch to false for launch
+
 window.requestAnimationFrame =
   window['requestAnimationFrame'] ||
   window['webkitRequestAnimationFrame'] ||
@@ -42,6 +44,7 @@ class Assets {
   build = loadSound('build');
   buildRoad = loadSound('road');
   destroy = loadSound('destroy');
+  noCash = loadSound('nocash');
 }
 
 class Particle {
@@ -83,9 +86,10 @@ class GameCtrl {
   private shakeDelta: number = null;
   private highlight: Coord;
   private highlightedCell: Cell;
+  private builtSomething = false;
   private particles: {[key: string]: Array<Particle>} = {};
 
-  constructor(private $scope: ng.IScope, $interval) {
+  constructor(private $scope: ng.IScope, private $timeout, $interval) {
     if (window.localStorage && window.localStorage['toytownCity']) {
       this.city = City.fromJson(window.localStorage['toytownCity']);
     } else {
@@ -98,11 +102,12 @@ class GameCtrl {
     all.on('mousedown', this.mouseDown.bind(this));
     all.on('mouseup', this.mouseUp.bind(this));
 
-    $interval(this.save.bind(this), 1000); // Side effect: trigger digest loop once a second.
+    $interval(this.save.bind(this), 1000);
+    $interval(function() {}, 200); // Side effect: trigger digest loop.
     $scope['speed'] = 1;
     $scope['build'] = null;
     $scope.$watch('build', (newValue, oldValue) => {
-      if (newValue != oldValue) this.assets.click.play();
+      this.builtSomething = false;
     });
     $scope.$watch('speed', (newValue, oldValue) => {
       if (newValue != oldValue) this.assets.click.play();
@@ -115,6 +120,23 @@ class GameCtrl {
     this.city = new City();
   }
 
+  steal() {
+    if (DEBUG) {
+      this.city.cash += 1000000;
+    }
+  }
+
+  cashFlashing = false;
+  flashCash() {
+    this.cashFlashing = true;
+    this.$timeout(() => { this.cashFlashing = false; }, 1000);
+    this.$scope.$digest();
+  }
+
+  buildCost(type: string): number {
+    return BUILD_COSTS[CellType[type]];
+  }
+
   private save() {
     if (window.localStorage) {
       window.localStorage['toytownCity'] = this.city.toJson();
@@ -122,8 +144,9 @@ class GameCtrl {
   }
 
   private mouseMove(e: MouseEvent) {
+    var oldHighlight = this.highlight;
     var coord = this.updateHighlight(e);
-    if (coord && e.which == 1) {
+    if (e.which == 1 && coord && coord != oldHighlight) {
       this.click(e, coord);
       e.preventDefault();
     }
@@ -159,14 +182,12 @@ class GameCtrl {
   private shortestPath: Array<Coord>;
 
   private click(e: MouseEvent, coord: Coord) {
-    // For debugging.
-    if (e.shiftKey) {
+    if (DEBUG && e.shiftKey) {
       this.city.tickCell(coord);
       return;
     }
 
-    // For debugging.
-    if (e.ctrlKey) {
+    if (DEBUG && e.ctrlKey) {
       if (this.startPoint) {
         this.shortestPath = this.city.getShortestPath(this.startPoint, coord);
       } else {
@@ -176,33 +197,53 @@ class GameCtrl {
     }
 
     var buildMode = this.buildMode();
-    if (buildMode != null) {
-      if (buildMode == CellType.DESTROY) {
-        if (this.city.destroy(coord)) {
-          this.assets.destroy.play();
-          this.shake(1);
-          this.smoke(coord, 4);
-        }
-      } else {
-        if (this.city.build(coord, buildMode)) {
-          switch (buildMode) {
-            case CellType.HOUSE:
-            case CellType.OFFICE:
-              this.assets.build.play();
+    if (buildMode && this.highlightedCell) {
+      switch (buildMode) {
+        case CellType.GRASS:
+          if (this.highlightedCell.type != CellType.GRASS) {
+            if (this.city.destroy(coord)) {
+              this.assets.destroy.play();
               this.shake(1);
-              break;
-            case CellType.ROAD:
-              this.assets.buildRoad.play();
-              break;
+              this.smoke(coord, 4);
+              this.builtSomething = true;
+            }
+          } else {
+            this.assets.noCash.play();
+            this.flashCash();
           }
-          this.smoke(coord, 1);
-        }
+          break;
+        default:
+          if (this.highlightedCell.type == CellType.GRASS) {
+            if (this.city.build(coord, buildMode)) {
+              switch (buildMode) {
+                case CellType.HOUSE:
+                case CellType.OFFICE:
+                  this.assets.build.play();
+                  this.shake(1);
+                  break;
+                case CellType.ROAD:
+                  this.assets.buildRoad.play();
+                  break;
+              }
+              this.smoke(coord, 1);
+              this.builtSomething = true;
+            } else {
+              this.assets.noCash.play();
+              this.flashCash();
+            }
+          }
+          break;
       }
     }
   }
 
   private buildMode(): CellType {
     return <CellType><any>CellType[this.$scope['build']];
+  }
+
+  private stopBuilding() {
+    this.$scope['build'] = null;
+    this.$scope.$digest();
   }
 
   private speed(): number {
@@ -345,7 +386,10 @@ class GameCtrl {
           this.renderer.drawSprite(contract.employee, this.assets.highlight, 2);
         });
       } else {
-        this.renderer.drawSprite(this.highlight, this.assets.highlight);
+        if ((this.buildMode() == CellType.GRASS) != (this.highlightedCell.type == CellType.GRASS)) {
+          this.renderer.drawSprite(this.highlight, this.assets.highlight,
+              BUILD_COSTS[this.buildMode()] <= this.city.cash ? 0 : 2);
+        }
       }
     }
 

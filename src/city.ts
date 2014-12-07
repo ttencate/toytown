@@ -9,12 +9,24 @@ var JOB_STAGES = [
   0, 8, 16, 32, 64, 128, 256, 512
 ];
 
+var BUILD_COSTS = {};
+BUILD_COSTS[CellType.GRASS] = 1000;
+BUILD_COSTS[CellType.HOUSE] = 1500;
+BUILD_COSTS[CellType.OFFICE] = 2500;
+BUILD_COSTS[CellType.ROAD] = 500;
+
 var DRIVE_TIME = 1;
 var WALK_TIME = 10;
 var TRAFFIC_FALLOFF = 200;
 var ROAD_CAPACITY = 250;
 var ROAD_SPEED_FALLOFF = 4;
 var MAX_COMMUTE_TIME = 60;
+
+var ROAD_MAINTENANCE_COST = 20;
+var SALARY = 1;
+var TICKS_PER_MONTH = 500;
+
+var MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
 
 class Coord {
   private static cache: {[key: string]: Coord} = {};
@@ -61,7 +73,7 @@ interface Route extends Array<Coord> {
 }
 
 enum CellType {
-  DESTROY, // Not actually a cell type.
+  UNUSED, // legacy
   GRASS,
   HOUSE,
   OFFICE,
@@ -189,9 +201,17 @@ class City {
   private grid: Array<Array<Cell>>;
   contracts = new Contracts();
 
+  tickCount = 0;
+
   population = 0;
   jobs = 0;
   employments = 0;
+
+  cash = 10000;
+  taxRate = 20;
+  taxIncome = 0;
+  roadMaintenanceCost = 0;
+  cashflow = 0;
 
   constructor() {
     this.grid = [];
@@ -248,6 +268,10 @@ class City {
     if (cell.type != CellType.GRASS) {
       return false;
     }
+    if (this.cash < BUILD_COSTS[type]) {
+      return false;
+    }
+    this.cash -= BUILD_COSTS[type];
     cell.type = type;
     return true;
   }
@@ -257,6 +281,10 @@ class City {
     if (cell.type == CellType.GRASS) {
       return false;
     }
+    if (this.cash < BUILD_COSTS[CellType.GRASS]) {
+      return false;
+    }
+    this.cash -= BUILD_COSTS[CellType.GRASS];
     cell.type = CellType.GRASS;
     cell.stage = 0;
     cell.population = 0;
@@ -327,8 +355,6 @@ class City {
     return undefined;
   }
 
-  tickCount = 0;
-
   tick() {
     this.tickCount++;
     this.tickCell(Coord.of(Math.floor(Math.random() * this.size), Math.floor(Math.random() * this.size)));
@@ -343,6 +369,17 @@ class City {
         cell.updateCars(n, e, s, w);
       });
     }
+    if (this.tickCount % TICKS_PER_MONTH == 0) {
+      this.collectTax();
+    }
+  }
+
+  year(): number {
+    return 2000 + Math.floor(this.tickCount / TICKS_PER_MONTH / 12);
+  }
+
+  month(): string {
+    return MONTHS[Math.floor(this.tickCount / TICKS_PER_MONTH) % 12];
   }
 
   // Public only for debugging.
@@ -365,7 +402,7 @@ class City {
         var contracts = this.contracts.byEmployee(coord);
         for (var i = 0; i < contracts.length; i++) {
           if (Math.random() < 0.01) {
-            // TODO this.removeContract(contracts[i]);
+            this.removeContract(contracts[i]);
           }
         }
 
@@ -437,7 +474,9 @@ class City {
 
       visited[current.asString] = true;
       if (cell.vacancies() > 0) {
-        this.addContract(new Contract(employee, current));
+        var contract = new Contract(employee, current);
+        contract.commuteTime = this.getShortestPath(employee, current).time;
+        this.addContract(contract);
         return;
       }
 
@@ -454,10 +493,20 @@ class City {
     this.employments = this.contracts.asArray.length;
     this.population = 0;
     this.jobs = 0;
+    this.roadMaintenanceCost = 0;
     this.forEachCell((coord, cell) => {
       this.population += cell.population;
       this.jobs += cell.maxJobs();
+      if (cell.type == CellType.ROAD) {
+        this.roadMaintenanceCost += ROAD_MAINTENANCE_COST;
+      }
       cell.traffic = Math.round(cell.trafficSamples * this.employments / TRAFFIC_FALLOFF);
     });
+    this.taxIncome = SALARY * this.employments * this.taxRate;
+    this.cashflow = this.taxIncome - this.roadMaintenanceCost;
+  }
+
+  private collectTax() {
+    this.cash += this.cashflow;
   }
 }

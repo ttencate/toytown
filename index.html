@@ -16,17 +16,17 @@
         <h1>TOYTOWN</h1>
 
         <div class="buttongroup">
-          <label class="button build house" ng-class="{selected: build == 'HOUSE'}" title="Build houses" offable>
+          <label class="button build house" ng-class="{selected: build == 'HOUSE'}" title="Build houses (Ŧ {{ctrl.buildCost('HOUSE')}})" ng-click="ctrl.assets.click.play()" offable>
             <input type="radio" name="build" value="HOUSE" ng-model="build"/>
           </label>
-          <label class="button build office" ng-class="{selected: build == 'OFFICE'}" title="Build offices" offable>
+          <label class="button build office" ng-class="{selected: build == 'OFFICE'}" title="Build offices (Ŧ {{ctrl.buildCost('OFFICE')}})" ng-click="ctrl.assets.click.play()" offable>
             <input type="radio" name="build" value="OFFICE" ng-model="build"/>
           </label>
-          <label class="button build road" ng-class="{selected: build == 'ROAD'}" title="Build roads" offable>
+          <label class="button build road" ng-class="{selected: build == 'ROAD'}" title="Build roads (Ŧ {{ctrl.buildCost('ROAD')}})" ng-click="ctrl.assets.click.play()" offable>
             <input type="radio" name="build" value="ROAD" ng-model="build"/>
           </label>
-          <label class="button build destroy" ng-class="{selected: build == 'DESTROY'}" title="Destroy buildings" offable>
-            <input type="radio" name="build" value="DESTROY" ng-model="build"/>
+          <label class="button build destroy" ng-class="{selected: build == 'GRASS'}" title="Destroy buildings (Ŧ {{ctrl.buildCost('GRASS')}})" ng-click="ctrl.assets.click.play()" offable>
+            <input type="radio" name="build" value="GRASS" ng-model="build"/>
           </label>
         </div>
 
@@ -46,6 +46,11 @@
             <input type="radio" name="speed" value="3" ng-model="speed"/>
           </label>
         </div>
+
+        {{ctrl.city.month()}} {{ctrl.city.year()}}<br>
+        <span ng-click="ctrl.steal()" ng-class="{'cash-flashing': ctrl.cashFlashing}">
+          Cash: Ŧ&nbsp;{{ctrl.city.cash | number}}
+        </span>
       </div>
       <div class="corner topright ng-cloak">
         <div ng-if="ctrl.highlightedCell">
@@ -59,11 +64,16 @@
         </div>
       </div>
       <div class="corner bottomleft ng-cloak">
-        {{ctrl.ticksPerSecond}} ticks/s | {{ctrl.framesPerSecond}} frames/s<br>
+        Tax rate: <input type="number" ng-model="ctrl.city.taxRate" min="0" max="50" step="1" value="20"></input>%<br>
+        Tax income: Ŧ {{ctrl.city.taxIncome | number}}<br>
+        Road maintenance: Ŧ {{ctrl.city.roadMaintenanceCost | number}}<br>
+        Cashflow: Ŧ {{ctrl.city.cashflow | number}}<br>
         <br>
         Jobs: {{ctrl.city.jobs | number}}<br>
         Employments: {{ctrl.city.employments | number}}<br>
-        Population: {{ctrl.city.population | number}}
+        Population: {{ctrl.city.population | number}}<br>
+        <br>
+        {{ctrl.ticksPerSecond}} ticks/s | {{ctrl.framesPerSecond}} frames/s<br>
       </div>
       <div class="corner bottomright ng-cloak">
         <span ng-mouseenter="ctrl.overlay = 'OCCUPANCY'" ng-mouseleave="ctrl.overlay = null">Occupancy</span><br>

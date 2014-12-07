@@ -28,6 +28,16 @@ h1 {
   padding: 0;
 }
 
+@-webkit-keyframes flash {
+  0% {color: white;}
+  50% {color: white;}
+  51% {color: red;}
+  100% {color: red;}
+}
+.cash-flashing {
+  -webkit-animation: flash 0.2s infinite;
+}
+
 .buttongroup {
   font-size: 0;
   & > * {
