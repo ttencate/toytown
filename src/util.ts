@@ -19,3 +19,17 @@ function removeRandom<T>(array: Array<T>) {
 function pickRandom<T>(array: Array<T>): T {
   return array[Math.floor(array.length * Math.random())];
 }
+
+function clamp(min: number, max: number, x: number) {
+  return x < min ? min : x > max ? max : x;
+}
+
+function shuffle<T>(array: Array<T>): Array<T> {
+  for (var i = 0; i < array.length; i++) {
+    var index = i + Math.floor(Math.random() * (array.length - i));
+    var tmp = array[i];
+    array[i] = array[index];
+    array[index] = tmp;
+  }
+  return array;
+}

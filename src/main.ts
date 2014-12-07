@@ -143,16 +143,20 @@ class GameCtrl {
     }
   }
 
+  private isMouseDown = false;
+
   private mouseMove(e: MouseEvent) {
     var oldHighlight = this.highlight;
     var coord = this.updateHighlight(e);
-    if (e.which == 1 && coord && coord != oldHighlight) {
+    if (this.isMouseDown && coord && coord != oldHighlight) {
       this.click(e, coord);
       e.preventDefault();
     }
   }
 
   private mouseDown(e: MouseEvent) {
+    if (e.which != 1) return;
+    this.isMouseDown = true;
     var coord = this.updateHighlight(e);
     if (coord) {
       this.click(e, coord);
@@ -161,6 +165,8 @@ class GameCtrl {
   }
 
   private mouseUp(e: MouseEvent) {
+    if (e.which != 1) return;
+    this.isMouseDown = false;
     this.startPoint = null;
     this.shortestPath = null;
   }
@@ -373,6 +379,24 @@ class GameCtrl {
           this.backToFront((coord, cell) => {
             this.renderer.drawSprite(coord, this.assets.overlay, 0,
               Math.min(7, Math.ceil(7 * cell.commuteTime / MAX_COMMUTE_TIME)));
+          });
+          break;
+        case 'POLLUTION':
+          this.backToFront((coord, cell) => {
+            this.renderer.drawSprite(coord, this.assets.overlay, 0,
+              Math.min(7, Math.ceil(7 * cell.pollution)));
+          });
+          break;
+        case 'HOUSING_DESIRABILITY':
+          this.backToFront((coord, cell) => {
+            this.renderer.drawSprite(coord, this.assets.overlay, 0,
+              Math.min(7, Math.ceil(0.0001 + 7 * (1 - cell.houseDesirability))));
+          });
+          break;
+        case 'OFFICE_DESIRABILITY':
+          this.backToFront((coord, cell) => {
+            this.renderer.drawSprite(coord, this.assets.overlay, 0,
+              Math.min(7, Math.ceil(0.0001 + 7 * (1 - cell.officeDesirability))));
           });
           break;
       }

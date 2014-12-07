@@ -1,13 +1,11 @@
 /// <reference path="../typings/tsd.d.ts" />
 /// <reference path="util.ts" />
 
-var POPULATION_STAGES = [
-  0, 2, 4, 8, 16, 32, 64, 128
-];
+var POPULATION_STAGES = [ 0, 2, 4, 8, 16, 32, 64, 128 ];
+var MIN_HOUSES_FOR_STAGE = [ 0, 0, 2, 4, 8, 16, 32, 64 ];
 
-var JOB_STAGES = [
-  0, 8, 16, 32, 64, 128, 256, 512
-];
+var JOB_STAGES = [ 0, 4, 8, 16, 32, 64, 128, 256 ];
+var MIN_OFFICES_FOR_STAGE = [ 0, 0, 1, 2, 4, 8, 16, 32 ];
 
 var BUILD_COSTS = {};
 BUILD_COSTS[CellType.GRASS] = 1000;
@@ -23,6 +21,7 @@ var ROAD_SPEED_FALLOFF = 4;
 var MAX_COMMUTE_TIME = 60;
 
 var ROAD_MAINTENANCE_COST = 20;
+var CAR_MAINTENANCE_COST = 1;
 var SALARY = 1;
 var TICKS_PER_MONTH = 500;
 
@@ -92,11 +91,17 @@ class Cell {
   population = 0;
   employers = 0;
   employees = 0;
-  commuteTime = 0;
 
   trafficSamples = 0;
   traffic = 0;
   cars = 0;
+  pollution = 0;
+  commuteTime = 0;
+
+  houseness = 0;
+  officeness = 0;
+  houseDesirability = 0;
+  officeDesirability = 0;
 
   maxPopulation(): number {
     if (this.type != CellType.HOUSE) {
@@ -206,6 +211,14 @@ class City {
   population = 0;
   jobs = 0;
   employments = 0;
+  unemployment = 0;
+  numHouses = 0;
+  numOffices = 0;
+  pollution = 0;
+  commuteTime = 0;
+
+  housingDemand = 0;
+  officesDemand = 0;
 
   cash = 10000;
   taxRate = 20;
@@ -254,9 +267,10 @@ class City {
     return this.getCell(coord) || Cell.DEFAULT;
   }
 
-  forEachCell(callback: (coord: Coord, cell: Cell) => void) {
+  forEachCell(callback: (coord: Coord, cell: Cell) => void, modulo: number = undefined) {
     for (var i = 0; i < this.size; i++) {
       for (var j = 0; j < this.size; j++) {
+        if (modulo !== undefined && (i+j) % 2 != modulo) continue;
         var coord = Coord.of(i, j);
         callback(coord, this.getCell(coord));
       }
@@ -385,52 +399,71 @@ class City {
   // Public only for debugging.
   tickCell(coord: Coord) {
     var cell = this.getCell(coord);
-    // TODO shrink if things are going badly
     switch (cell.type) {
       case CellType.HOUSE:
-        // Immigration if there are enough jobs.
-        var populationDemand = this.jobs - this.population + Math.ceil(POPULATION_STAGES[1] + 0.01 * (this.jobs + this.population));
-        if (populationDemand > 0) {
-          if (cell.stage < POPULATION_STAGES.length - 1
-              && populationDemand >= POPULATION_STAGES[cell.stage + 1] - cell.population) {
-            cell.stage++;
-          }
-          cell.population = Math.min(cell.maxPopulation(), cell.population + Math.min(10, populationDemand));
-        }
-
-        // Have some people randomly be fired.
-        var contracts = this.contracts.byEmployee(coord);
-        for (var i = 0; i < contracts.length; i++) {
-          if (Math.random() < 0.01) {
-            this.removeContract(contracts[i]);
-          }
-        }
-
-        // Go job hunting.
-        var unemployed = cell.population - cell.employers;
-        for (var i = 0; i < unemployed; i++) {
-          this.findJob(coord);
-        }
-
-        // Compute average commute length.
-        var contracts = this.contracts.byEmployee(coord);
-        if (contracts.length > 0) {
-          var sum = 0;
-          contracts.forEach((contract) => { sum += contract.commuteTime; });
-          cell.commuteTime = sum / contracts.length;
-        } else {
-          cell.commuteTime = 0;
-        }
+        this.tickHouse(coord, cell);
         break;
       case CellType.OFFICE:
-        var workerSupply = this.population - this.jobs + Math.ceil(JOB_STAGES[1] + 0.01 * (this.jobs + this.population));
-        if (workerSupply > 0) {
-          if (cell.stage < JOB_STAGES.length - 1
-              && workerSupply > JOB_STAGES[cell.stage + 1] - cell.employees) {
-            cell.stage++;
-          }
-        }
+        this.tickOffice(coord, cell);
         break;
+    }
+  }
+
+  private tickHouse(coord: Coord, cell: Cell) {
+    // Immigration if there is enough demand.
+    var demand = this.housingDemand * cell.houseDesirability;
+    var sumDemand = this.housingDemand + cell.houseDesirability;
+    if (sumDemand > 1.0
+        && cell.population >= cell.maxPopulation()
+        && cell.stage < POPULATION_STAGES.length - 1
+        && this.numHouses >= MIN_HOUSES_FOR_STAGE[cell.stage + 1]) {
+      cell.stage++;
+    }
+    if (demand > 0) {
+      cell.population += Math.min(cell.maxPopulation(), Math.ceil((cell.maxPopulation() - cell.population) * demand));
+    } else if (sumDemand < 0) {
+      var peopleLeaving = clamp(0, cell.population, cell.population * Math.abs(sumDemand));
+      var contracts = this.contracts.byEmployee(coord).slice();
+      for (var i = 0; i < peopleLeaving; i++) {
+        if (contracts.length) {
+          this.removeContract(contracts.pop());
+        }
+        cell.population--;
+      }
+    }
+
+    // Have some people randomly be fired.
+    var contracts = this.contracts.byEmployee(coord);
+    for (var i = 0; i < contracts.length; i++) {
+      if (Math.random() < 0.01) {
+        this.removeContract(contracts[i]);
+      }
+    }
+
+    // Go job hunting.
+    var unemployed = cell.population - cell.employers;
+    for (var i = 0; i < unemployed; i++) {
+      this.findJob(coord);
+    }
+
+    // Compute average commute length.
+    var contracts = this.contracts.byEmployee(coord);
+    if (contracts.length > 0) {
+      var sum = 0;
+      contracts.forEach((contract) => { sum += contract.commuteTime; });
+      cell.commuteTime = sum / contracts.length;
+    } else {
+      cell.commuteTime = 0;
+    }
+  }
+
+  private tickOffice(coord: Coord, cell: Cell) {
+    var demand = this.officesDemand * cell.officeDesirability;
+    if (this.officesDemand + cell.officeDesirability > 0.8
+        && cell.employees >= cell.maxJobs()
+        && cell.stage < JOB_STAGES.length - 1
+        && this.numOffices >= MIN_OFFICES_FOR_STAGE[cell.stage + 1]) {
+      cell.stage++;
     }
   }
 
@@ -491,19 +524,90 @@ class City {
 
   private updateStats() {
     this.employments = this.contracts.asArray.length;
+
     this.population = 0;
     this.jobs = 0;
     this.roadMaintenanceCost = 0;
+    this.numHouses = 0;
+    this.numOffices = 0;
+    this.pollution = 0;
+    this.commuteTime = 0;
     this.forEachCell((coord, cell) => {
       this.population += cell.population;
       this.jobs += cell.maxJobs();
       if (cell.type == CellType.ROAD) {
-        this.roadMaintenanceCost += ROAD_MAINTENANCE_COST;
+        this.roadMaintenanceCost += ROAD_MAINTENANCE_COST + CAR_MAINTENANCE_COST * cell.traffic;
+      }
+
+      cell.officeness *= 0.9;
+      cell.houseness *= 0.9;
+      if (cell.type == CellType.HOUSE) {
+        this.commuteTime += cell.commuteTime;
+        this.numHouses++;
+        cell.houseness = 1;
+      }
+      if (cell.type == CellType.OFFICE) {
+        this.numOffices++;
+        cell.officeness = 1;
       }
       cell.traffic = Math.round(cell.trafficSamples * this.employments / TRAFFIC_FALLOFF);
+
+      cell.pollution *= 0.99;
+      if (cell.type == CellType.ROAD) {
+        cell.pollution = Math.max(cell.pollution, Math.min(1, cell.traffic / ROAD_CAPACITY));
+      }
+      if (cell.type == CellType.HOUSE || cell.type == CellType.OFFICE) {
+        this.pollution += cell.pollution;
+      }
+
+      cell.houseDesirability = clamp(0, 1,
+          1.0 +
+          2.0 * -cell.officeness +
+          0.8 * -cell.pollution);
+      cell.officeDesirability = clamp(0, 1,
+          1.0 +
+          1.0 * -cell.houseness +
+          0.3 * -cell.pollution);
     });
+    this.pollution /= this.numHouses + this.numOffices;
+    this.commuteTime /= this.numHouses;
+    this.unemployment = 1 - this.employments / this.population;
+
+    for (var mod = 0; mod < 2; mod++) {
+      this.forEachCell((coord, cell) => {
+        shuffle(coord.neighbors()).forEach((neighCoord) => {
+          var neigh = this.getCell(neighCoord);
+          if (!neigh) return;
+          var mean = (cell.pollution + neigh.pollution) / 2;
+          var POLLUTION_SPREAD = 0.05;
+          cell.pollution = POLLUTION_SPREAD * mean + (1 - POLLUTION_SPREAD) * cell.pollution;
+          neigh.pollution = POLLUTION_SPREAD * mean + (1 - POLLUTION_SPREAD) * neigh.pollution;
+
+          var SPREAD = 0.25;
+          mean = (cell.houseness + neigh.houseness) / 2;
+          cell.houseness = SPREAD * mean + (1 - SPREAD) * cell.houseness;
+          neigh.houseness = SPREAD * mean + (1 - SPREAD) * neigh.houseness;
+          mean = (cell.officeness + neigh.officeness) / 2;
+          cell.officeness = SPREAD * mean + (1 - SPREAD) * cell.officeness;
+          neigh.officeness = SPREAD * mean + (1 - SPREAD) * neigh.officeness;
+        });
+      }, mod);
+    }
+
     this.taxIncome = SALARY * this.employments * this.taxRate;
     this.cashflow = this.taxIncome - this.roadMaintenanceCost;
+
+    var jobAvailability = this.population == 0 ? 1 : this.jobs / this.population - 1;
+    this.housingDemand = clamp(-1, 1,
+        0.2 +
+        2.0 * jobAvailability +
+        0.2 * (1 - this.taxRate / 25) +
+        0.5 * Math.min(0, 1 - this.commuteTime / 30));
+
+    var workerAvailability = this.jobs == 0 ? 1 : this.population / this.jobs - 1;
+    this.officesDemand = clamp(-1, 1,
+        0.2 +
+        0.8 * workerAvailability);
   }
 
   private collectTax() {
