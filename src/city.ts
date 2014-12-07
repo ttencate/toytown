@@ -14,6 +14,7 @@ var WALK_TIME = 10;
 var TRAFFIC_FALLOFF = 200;
 var ROAD_CAPACITY = 250;
 var ROAD_SPEED_FALLOFF = 4;
+var MAX_COMMUTE_TIME = 60;
 
 class Coord {
   private static cache: {[key: string]: Coord} = {};
@@ -55,6 +56,10 @@ class Coord {
   }
 }
 
+interface Route extends Array<Coord> {
+  time: number;
+}
+
 enum CellType {
   DESTROY, // Not actually a cell type.
   GRASS,
@@ -75,6 +80,7 @@ class Cell {
   population = 0;
   employers = 0;
   employees = 0;
+  commuteTime = 0;
 
   trafficSamples = 0;
   traffic = 0;
@@ -127,6 +133,8 @@ class Cell {
 }
 
 class Contract {
+  commuteTime = 0;
+
   constructor(public employee: Coord, public employer: Coord) {
   }
 
@@ -261,7 +269,7 @@ class City {
     return true;
   }
 
-  getShortestPath(from: Coord, to: Coord): Array<Coord> {
+  getShortestPath(from: Coord, to: Coord): Route {
     function heuristic(from: Coord, to: Coord) {
       return from.manhattanDistance(to);
     }
@@ -286,7 +294,8 @@ class City {
       }
       delete openSet[current.asString];
       if (current == to) {
-        var path = [to];
+        var path = <Route>[to];
+        path.time = gScore[to.asString];
         while (to != from) {
           to = cameFrom[to.asString];
           path.unshift(to);
@@ -365,6 +374,16 @@ class City {
         for (var i = 0; i < unemployed; i++) {
           this.findJob(coord);
         }
+
+        // Compute average commute length.
+        var contracts = this.contracts.byEmployee(coord);
+        if (contracts.length > 0) {
+          var sum = 0;
+          contracts.forEach((contract) => { sum += contract.commuteTime; });
+          cell.commuteTime = sum / contracts.length;
+        } else {
+          cell.commuteTime = 0;
+        }
         break;
       case CellType.OFFICE:
         var workerSupply = this.population - this.jobs + Math.ceil(JOB_STAGES[1] + 0.01 * (this.jobs + this.population));
@@ -387,6 +406,7 @@ class City {
     route.forEach((coord) => {
       this.getCell(coord).trafficSamples++;
     });
+    contract.commuteTime = route.time;
   }
 
   private addContract(contract: Contract) {

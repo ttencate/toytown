@@ -328,6 +328,12 @@ class GameCtrl {
               Math.min(7, Math.ceil(7 * cell.traffic / ROAD_CAPACITY)));
           });
           break;
+        case 'COMMUTE':
+          this.backToFront((coord, cell) => {
+            this.renderer.drawSprite(coord, this.assets.overlay, 0,
+              Math.min(7, Math.ceil(7 * cell.commuteTime / MAX_COMMUTE_TIME)));
+          });
+          break;
       }
     }
     if (this.highlight) {
