@@ -78,6 +78,7 @@ class Cell {
 
   trafficSamples = 0;
   traffic = 0;
+  cars = 0;
 
   maxPopulation(): number {
     if (this.type != CellType.HOUSE) {
@@ -106,6 +107,19 @@ class Cell {
       return DRIVE_TIME / Math.max(0.1, Math.pow(Math.max(0, ROAD_CAPACITY - this.traffic) / ROAD_CAPACITY, 1 / ROAD_SPEED_FALLOFF));
     } else {
       return WALK_TIME;
+    }
+  }
+
+  updateCars(n: boolean, e: boolean, s: boolean, w: boolean) {
+    this.cars = 0;
+    var allowed = (n?0x03:0) | (e?0x0c:0) | (s?0x30:0) | (w?0xc0:0);
+    var totalSpace = (n?2:0) + (e?2:0) + (s?2:0) + (w?2:0);
+    var num = Math.min(totalSpace, totalSpace * this.traffic / ROAD_CAPACITY);
+    for (; num > 0; num--) {
+      do {
+        var bit = 1 << Math.floor(Math.random() * 8);
+      } while (!(allowed & bit) || this.cars & bit);
+      this.cars |= bit;
     }
   }
   
@@ -304,10 +318,22 @@ class City {
     return undefined;
   }
 
+  tickCount = 0;
+
   tick() {
+    this.tickCount++;
     this.tickCell(Coord.of(Math.floor(Math.random() * this.size), Math.floor(Math.random() * this.size)));
     this.tickContract(pickRandom(this.contracts.asArray));
     this.updateStats();
+    if (this.tickCount % 200 == 0) {
+      this.forEachCell((coord, cell) => {
+        var n = this.getCellOrDefault(coord.offset(-1, 0)).type == CellType.ROAD;
+        var e = this.getCellOrDefault(coord.offset(0, 1)).type == CellType.ROAD;
+        var s = this.getCellOrDefault(coord.offset(1, 0)).type == CellType.ROAD;
+        var w = this.getCellOrDefault(coord.offset(0, -1)).type == CellType.ROAD;
+        cell.updateCars(n, e, s, w);
+      });
+    }
   }
 
   // Public only for debugging.

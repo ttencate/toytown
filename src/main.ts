@@ -32,6 +32,7 @@ class Assets {
   house = new Sprite(this.sprites, 0, 200, 80, 160, 40, 140);
   office = new Sprite(this.sprites, 0, 360, 80, 160, 40, 140);
   road = new Sprite(this.sprites, 0, 520, 80, 40, 40, 20);
+  traffic = new Sprite(this.sprites, 320, 520, 80, 40, 40, 20);
 
   highlight = new Sprite(this.sprites, 0, 120, 80, 40, 40, 20);
   overlay = new Sprite(this.sprites, 0, 680, 80, 40, 40, 20);
@@ -294,7 +295,8 @@ class GameCtrl {
     }
 
     this.renderer.clear();
-    this.backToFront(this.drawCell.bind(this));
+    this.backToFront(this.drawGround.bind(this));
+    this.backToFront(this.drawContents.bind(this));
     if (this.shortestPath) {
       for (var i = 0; i < this.shortestPath.length; i++) {
         this.renderer.drawSprite(this.shortestPath[i], this.assets.highlight, 1);
@@ -303,30 +305,26 @@ class GameCtrl {
     if (this.overlay) {
       switch (this.overlay) {
         case 'OCCUPANCY':
-          this.backToFront((coord) => {
-            var cell = this.city.getCell(coord);
-            this.renderer.drawSprite(coord, this.assets.overlay,
+          this.backToFront((coord, cell) => {
+            this.renderer.drawSprite(coord, this.assets.overlay, 0,
               Math.min(7, Math.ceil(7 * (1 - cell.population / cell.maxPopulation()))));
           });
           break;
         case 'UNEMPLOYMENT':
-          this.backToFront((coord) => {
-            var cell = this.city.getCell(coord);
-            this.renderer.drawSprite(coord, this.assets.overlay,
+          this.backToFront((coord, cell) => {
+            this.renderer.drawSprite(coord, this.assets.overlay, 0,
               Math.min(7, Math.ceil(7 * (1 - cell.employers / cell.population))));
           });
           break;
         case 'VACANCY':
-          this.backToFront((coord) => {
-            var cell = this.city.getCell(coord);
-            this.renderer.drawSprite(coord, this.assets.overlay,
+          this.backToFront((coord, cell) => {
+            this.renderer.drawSprite(coord, this.assets.overlay, 0,
               Math.min(7, Math.ceil(7 * (1 - cell.employees / cell.maxJobs()))));
           });
           break;
         case 'TRAFFIC':
-          this.backToFront((coord) => {
-            var cell = this.city.getCell(coord);
-            this.renderer.drawSprite(coord, this.assets.overlay,
+          this.backToFront((coord, cell) => {
+            this.renderer.drawSprite(coord, this.assets.overlay, 0,
               Math.min(7, Math.ceil(7 * cell.traffic / ROAD_CAPACITY)));
           });
           break;
@@ -348,21 +346,22 @@ class GameCtrl {
     requestAnimationFrame(this.frame.bind(this));
   }
 
-  private backToFront(callback: (coord: Coord) => void) {
+  private backToFront(callback: (coord: Coord, cell: Cell) => void) {
     var s = this.city.size;
     for (var y = -s + 1; y < this.city.size; y++) {
       for (var x = 0; x < s - Math.abs(y); x++) {
+        var coord;
         if (y > 0) {
-          callback(Coord.of(y + x, x));
+          coord = Coord.of(y + x, x);
         } else {
-          callback(Coord.of(x, Math.abs(y) + x));
+          coord = Coord.of(x, Math.abs(y) + x);
         }
+        callback(coord, this.city.getCell(coord));
       }
     }
   }
 
-  private drawCell(coord: Coord, cell: Cell) {
-    var cell = this.city.getCell(coord);
+  private drawGround(coord: Coord, cell: Cell) {
     this.renderer.drawSprite(coord, this.assets.underground);
     switch (cell.type) {
       case CellType.GRASS:
@@ -370,19 +369,39 @@ class GameCtrl {
         break;
       case CellType.HOUSE:
         this.renderer.drawSprite(coord, this.assets.ground, 1);
-        this.renderer.drawSprite(coord, this.assets.house, cell.stage);
         break;
       case CellType.OFFICE:
         this.renderer.drawSprite(coord, this.assets.ground, 2);
-        this.renderer.drawSprite(coord, this.assets.office, cell.stage);
         break;
       case CellType.ROAD:
         this.renderer.drawSprite(coord, this.assets.ground, 1);
+        var n = this.city.getCellOrDefault(coord.offset(-1, 0)).type == CellType.ROAD;
+        var e = this.city.getCellOrDefault(coord.offset(0, 1)).type == CellType.ROAD;
+        var s = this.city.getCellOrDefault(coord.offset(1, 0)).type == CellType.ROAD;
+        var w = this.city.getCellOrDefault(coord.offset(0, -1)).type == CellType.ROAD;
         this.renderer.drawSprite(coord, this.assets.road,
-            (this.city.getCellOrDefault(coord.offset(-1, 0)).type == CellType.ROAD ? 1 : 0) +
-            (this.city.getCellOrDefault(coord.offset(0, 1)).type == CellType.ROAD ? 2 : 0),
-            (this.city.getCellOrDefault(coord.offset(1, 0)).type == CellType.ROAD ? 1 : 0) +
-            (this.city.getCellOrDefault(coord.offset(0, -1)).type == CellType.ROAD ? 2 : 0));
+            (n?1:0) + (e?2:0),
+            (s?1:0) + (w?2:0));
+        break;
+    }
+  }
+
+  private drawContents(coord: Coord, cell: Cell) {
+    switch (cell.type) {
+      case CellType.HOUSE:
+        this.renderer.drawSprite(coord, this.assets.house, cell.stage);
+        break;
+      case CellType.OFFICE:
+        this.renderer.drawSprite(coord, this.assets.office, cell.stage);
+        break;
+      case CellType.ROAD:
+        var frame = Math.floor(this.city.tickCount % 100 / 25)
+        for (var i = 0; i < 8; i++) {
+          if (cell.cars & (1 << i)) {
+            this.renderer.drawSprite(coord, this.assets.traffic, i >> 1, 4 * (i & 1) + frame);
+          }
+        }
+        break;
     }
     var particles = this.particles[coord.asString];
     if (particles) {
