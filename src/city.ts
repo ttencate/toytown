@@ -20,9 +20,9 @@ var ROAD_CAPACITY = 250;
 var ROAD_SPEED_FALLOFF = 4;
 var MAX_COMMUTE_TIME = 60;
 
-var ROAD_MAINTENANCE_COST = 20;
+var ROAD_MAINTENANCE_COST = 50;
 var CAR_MAINTENANCE_COST = 1;
-var SALARY = 1;
+var SALARY = 100;
 var TICKS_PER_MONTH = 500;
 
 var MONTHS = 'Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec'.split(' ');
@@ -77,6 +77,7 @@ enum CellType {
   HOUSE,
   OFFICE,
   ROAD,
+  TREES,
 }
 
 class PathStep {
@@ -220,7 +221,7 @@ class City {
   housingDemand = 0;
   officesDemand = 0;
 
-  cash = 10000;
+  cash = 20000;
   taxRate = 20;
   taxIncome = 0;
   roadMaintenanceCost = 0;
@@ -234,6 +235,42 @@ class City {
         this.grid[i][j] = new Cell();
       }
     }
+    this.plantForest(Coord.of(0, 15), 70);
+    this.plantForest(Coord.of(this.size - 1, 5), 30);
+    this.plantTrees();
+  }
+
+  private plantTrees() {
+    for (var i = 0; i < 50; i++) {
+      var cell = this.getCell(Coord.of(Math.floor(Math.random() * this.size), Math.floor(Math.random() * this.size)));
+      if (cell.type == CellType.TREES) continue;
+      cell.type = CellType.TREES;
+      cell.stage = 1;
+    }
+  }
+
+  private plantForest(seed: Coord, size: number) {
+    var edge = [seed];
+    var edgeSet = {}; edgeSet[seed.asString] = true;
+    var visited = {};
+    for (var i = 0; i < size; i++) {
+      var current = removeRandom(edge);
+      delete edgeSet[current.asString];
+
+      var cell = this.getCell(current);
+      if (!cell) continue;
+      visited[current.asString] = true;
+
+      this.getCell(current).type = CellType.TREES;
+      this.getCell(current).stage = 0;
+      current.neighbors().forEach((neighbor) => {
+        if (!visited[neighbor.asString] && !edgeSet[neighbor.asString]) {
+          edge.push(neighbor);
+          edgeSet[neighbor.asString] = true;
+        }
+      });
+    }
+
   }
 
   static fromJson(json: string) {
@@ -556,6 +593,9 @@ class City {
       if (cell.type == CellType.ROAD) {
         cell.pollution = Math.max(cell.pollution, Math.min(1, cell.traffic / ROAD_CAPACITY));
       }
+      if (cell.type == CellType.TREES) {
+        cell.pollution = Math.min(cell.pollution, 0.2);
+      }
       if (cell.type == CellType.HOUSE || cell.type == CellType.OFFICE) {
         this.pollution += cell.pollution;
       }
@@ -594,7 +634,7 @@ class City {
       }, mod);
     }
 
-    this.taxIncome = SALARY * this.employments * this.taxRate;
+    this.taxIncome = SALARY * this.employments * this.taxRate / 100;
     this.cashflow = this.taxIncome - this.roadMaintenanceCost;
 
     var jobAvailability = this.population == 0 ? 1 : this.jobs / this.population - 1;

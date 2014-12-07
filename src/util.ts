@@ -33,3 +33,7 @@ function shuffle<T>(array: Array<T>): Array<T> {
   }
   return array;
 }
+
+function randInt(upper: number): number {
+  return Math.floor(Math.random() * upper);
+}

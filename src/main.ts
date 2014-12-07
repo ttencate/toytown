@@ -35,6 +35,7 @@ class Assets {
   office = new Sprite(this.sprites, 0, 360, 80, 160, 40, 140);
   road = new Sprite(this.sprites, 0, 520, 80, 40, 40, 20);
   traffic = new Sprite(this.sprites, 320, 520, 80, 40, 40, 20);
+  trees = new Sprite(this.sprites, 140, 40, 120, 80, 60, 60);
 
   highlight = new Sprite(this.sprites, 0, 120, 80, 40, 40, 20);
   overlay = new Sprite(this.sprites, 0, 680, 80, 40, 40, 20);
@@ -457,6 +458,9 @@ class GameCtrl {
             (n?1:0) + (e?2:0),
             (s?1:0) + (w?2:0));
         break;
+      case CellType.TREES:
+        this.renderer.drawSprite(coord, this.assets.ground, cell.stage == 0 ? 3 : 0);
+        break;
     }
   }
 
@@ -475,6 +479,9 @@ class GameCtrl {
             this.renderer.drawSprite(coord, this.assets.traffic, i >> 1, 4 * (i & 1) + frame);
           }
         }
+        break;
+      case CellType.TREES:
+        this.renderer.drawSprite(coord, this.assets.trees, cell.stage);
         break;
     }
     var particles = this.particles[coord.asString];
