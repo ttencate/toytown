@@ -56,8 +56,6 @@
         <dl>
           <dt>Traffic</dt>
           <dd>{{ctrl.highlightedCell.traffic / 250 * 100 | number:0}}%</dd>
-          <dt>Commute</dt>
-          <dd>{{ctrl.highlightedCell.commuteTime | number:0}} min</dd>
           <dt>Pollution</dt>
           <dd>{{ctrl.highlightedCell.pollution * 100 | number:0}}%</dd>
           <dt>Housing desirability</dt>
@@ -65,8 +63,7 @@
           <dt>Office desirability</dt>
           <dd>{{ctrl.highlightedCell.officeDesirability * 100 | number:0}}%</dd>
         </dl>
-        <br>
-        <div ng-switch="ctrl.highlightedCell.type">
+        <div class="spacetop" ng-switch="ctrl.highlightedCell.type">
           <dl ng-switch-when="2">
             <dt>Inhabitants</dt>
             <dd>{{ctrl.highlightedCell.population | number}}</dd>
@@ -74,6 +71,8 @@
             <dd>{{ctrl.highlightedCell.maxPopulation() | number}}</dd>
             <dt>Employed</dt>
             <dd>{{ctrl.highlightedCell.employers | number}}</dd>
+            <dt>Commute</dt>
+            <dd>{{ctrl.highlightedCell.commuteTime | number:0}} min</dd>
           </dl>
           <dl ng-switch-when="3">
             <dt>Employees</dt>

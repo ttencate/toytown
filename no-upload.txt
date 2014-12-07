@@ -10,3 +10,7 @@ Makefile
 *.mmp
 screenshots
 src
+typings
+tsd.json
+*.scss
+*.svg

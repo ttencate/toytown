@@ -147,10 +147,16 @@ h2 {
 .celltype {
   position: absolute;
   top: $vpadding;
+  margin-top: 0;
+  padding-top: 0;
   height: 7rem;
   right: 23rem;
   border-right: 1px solid $borderColor;
   padding: 0 4rem 0;
+}
+
+.spacetop {
+  margin-top: 0.4rem;
 }
 
 .stats {
