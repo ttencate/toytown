@@ -46,6 +46,20 @@ class Renderer {
     return i >= 0 && i < this.city.size && j >= 0 && j < this.city.size ? Coord.of(i, j) : null;
   }
 
+  drawInfoLine(coord: Coord) {
+    return;
+    var x = this.getCenterX(coord);
+    var y = this.getCenterY(coord);
+    this.context.strokeStyle = '#112';
+    this.context.lineWidth = 2;
+    this.context.lineCap = 'round';
+    this.context.beginPath();
+    this.context.moveTo(x, y);
+    this.context.lineTo(this.canvasWidth, 0);
+    this.context.stroke();
+    this.context.closePath();
+  }
+
   private onResize() {
     var w = window.innerWidth - 2*MARGIN;
     var h = window.innerHeight - 2*MARGIN;

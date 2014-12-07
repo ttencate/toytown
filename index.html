@@ -15,7 +15,7 @@
       <div class="corner topleft ng-cloak">
         <h1>TOYTOWN</h1>
 
-        <div class="buttongroup">
+        <div class="buttongroup topline1">
           <label class="button build house" ng-class="{selected: build == 'HOUSE'}" title="Build houses (Ŧ {{ctrl.buildCost('HOUSE')}})" ng-click="ctrl.assets.click.play()" offable>
             <input type="radio" name="build" value="HOUSE" ng-model="build"/>
           </label>
@@ -30,9 +30,7 @@
           </label>
         </div>
 
-        <a href="" ng-click="ctrl.reset()">Restart</a>
-
-        <div class="buttongroup">
+        <div class="buttongroup topline2">
           <label class="button speed speed0" ng-class="{selected: speed == 0}" title="Pause">
             <input type="radio" name="speed" value="0" ng-model="speed"/>
           </label>
@@ -47,50 +45,94 @@
           </label>
         </div>
 
-        {{ctrl.city.month()}} {{ctrl.city.year()}}
+        <div class="big date">
+          {{ctrl.city.month()}} {{ctrl.city.year()}}
+        </div>
+
+        <a class="restart" href="" ng-click="ctrl.reset()">Restart</a>
       </div>
-      <div class="corner topright ng-cloak">
-        <div ng-if="ctrl.highlightedCell">
-          Inhabitants: {{ctrl.highlightedCell.population | number}}<br>
-          Employed: {{ctrl.highlightedCell.employers | number}}<br>
-          Capacity: {{ctrl.highlightedCell.maxPopulation() | number}}<br>
-          Employees: {{ctrl.highlightedCell.employees | number}}<br>
-          Jobs offered: {{ctrl.highlightedCell.maxJobs() | number}}<br>
-          Traffic: {{ctrl.highlightedCell.traffic / 250 * 100 | number:0}}%<br>
-          Commute: {{ctrl.highlightedCell.commuteTime | number:0}} min<br>
-          Pollution: {{ctrl.highlightedCell.pollution * 100 | number:0}}%<br>
-          Housing desirability: {{ctrl.highlightedCell.houseDesirability * 100 | number:0}}%<br>
-          Office desirability: {{ctrl.highlightedCell.officeDesirability * 100 | number:0}}%<br>
-          <br>
-          Houseness: {{ctrl.highlightedCell.houseness | number:2}}<br>
-          Officeness: {{ctrl.highlightedCell.officeness | number:2}}<br>
+      <div class="corner topright ng-cloak" ng-if="ctrl.highlightedCell">
+        <h2 class="celltype">{{ ['?', 'Grass', 'House', 'Office', 'Road', 'Trees'][ctrl.highlightedCell.type] }}</h2>
+        <dl>
+          <dt>Traffic</dt>
+          <dd>{{ctrl.highlightedCell.traffic / 250 * 100 | number:0}}%</dd>
+          <dt>Commute</dt>
+          <dd>{{ctrl.highlightedCell.commuteTime | number:0}} min</dd>
+          <dt>Pollution</dt>
+          <dd>{{ctrl.highlightedCell.pollution * 100 | number:0}}%</dd>
+          <dt>Housing desirability</dt>
+          <dd>{{ctrl.highlightedCell.houseDesirability * 100 | number:0}}%</dd>
+          <dt>Office desirability</dt>
+          <dd>{{ctrl.highlightedCell.officeDesirability * 100 | number:0}}%</dd>
+        </dl>
+        <br>
+        <div ng-switch="ctrl.highlightedCell.type">
+          <dl ng-switch-when="2">
+            <dt>Inhabitants</dt>
+            <dd>{{ctrl.highlightedCell.population | number}}</dd>
+            <dt>Capacity</dt>
+            <dd>{{ctrl.highlightedCell.maxPopulation() | number}}</dd>
+            <dt>Employed</dt>
+            <dd>{{ctrl.highlightedCell.employers | number}}</dd>
+          </dl>
+          <dl ng-switch-when="3">
+            <dt>Employees</dt>
+            <dd>{{ctrl.highlightedCell.employees | number}}</dd>
+            <dt>Jobs offered</dt>
+            <dd>{{ctrl.highlightedCell.maxJobs() | number}}</dd>
+            <dt>Jobs filled</dt>
+            <dd>{{ctrl.highlightedCell.employees | number}}</dd>
+          </dl>
         </div>
       </div>
       <div class="corner bottomleft ng-cloak">
-        <span ng-click="ctrl.steal()" ng-class="{'cash-flashing': ctrl.cashFlashing}">
-          Cash: Ŧ&nbsp;{{ctrl.city.cash | number}}
-        </span><br>
-        Tax rate: <input type="number" ng-model="ctrl.city.taxRate" min="5" max="50" step="1" value="20"></input>%<br>
-        Tax income: Ŧ {{ctrl.city.taxIncome | number}}<br>
-        Road maintenance: Ŧ {{ctrl.city.roadMaintenanceCost | number}}<br>
-        Cashflow: Ŧ {{ctrl.city.cashflow | number}}<br>
+        <div ng-click="ctrl.steal()" class="big">
+          Cash:<br>
+          <span ng-class="{'cash-flashing': ctrl.cashFlashing}">Ŧ&nbsp;{{ctrl.city.cash | number}}</span>
+        </div>
         <br>
-        Jobs: {{ctrl.city.jobs | number}}<br>
-        Employments: {{ctrl.city.employments | number}}<br>
-        Population: {{ctrl.city.population | number}}<br>
-        <br>
-        Housing demand: {{ctrl.city.housingDemand * 100 | number:0}}%<br>
-        Offices demand: {{ctrl.city.officesDemand * 100 | number:0}}%
+        <div>
+          Tax rate:
+          <input type="number" ng-model="ctrl.city.taxRate" min="5" max="50" step="1" value="20"></input>%
+        </div>
+        <dl>
+          <dt>Tax income</dt>
+          <dd>Ŧ {{ctrl.city.taxIncome | number}}</dd>
+          <dt>Road maintenance</dt>
+          <dd>Ŧ {{-ctrl.city.roadMaintenanceCost | number}}</dd>
+          <dt class="sumline">Cashflow</dt>
+          <dd class="sumline">Ŧ {{ctrl.city.cashflow | number}}</dd>
+        </dl>
+        <h2>Demand <small>(hover for desirability overlay)</small></h2>
+        <dl>
+          <dt overlay="HOUSING_DESIRABILITY">Housing demand</dt>
+          <dd overlay="HOUSING_DESIRABILITY">{{ctrl.city.housingDemand * 100 | number:0}}%</dd>
+          <dt overlay="OFFICE_DESIRABILITY">Offices demand</dt>
+          <dd overlay="OFFICE_DESIRABILITY">{{ctrl.city.officesDemand * 100 | number:0}}%</dd>
+        </dl>
       </div>
       <div class="corner bottomright ng-cloak">
-        <span ng-mouseenter="ctrl.overlay = 'OCCUPANCY'" ng-mouseleave="ctrl.overlay = null">Occupancy</span><br>
-        <span ng-mouseenter="ctrl.overlay = 'UNEMPLOYMENT'" ng-mouseleave="ctrl.overlay = null">Unemployment: {{ctrl.city.unemployment * 100 | number:0}}%</span><br>
-        <span ng-mouseenter="ctrl.overlay = 'VACANCY'" ng-mouseleave="ctrl.overlay = null">Vacancies</span><br>
-        <span ng-mouseenter="ctrl.overlay = 'TRAFFIC'" ng-mouseleave="ctrl.overlay = null">Traffic</span><br>
-        <span ng-mouseenter="ctrl.overlay = 'COMMUTE'" ng-mouseleave="ctrl.overlay = null">Commute time: {{ctrl.city.commuteTime | number:0}} min</span><br>
-        <span ng-mouseenter="ctrl.overlay = 'POLLUTION'" ng-mouseleave="ctrl.overlay = null">Pollution: {{ctrl.city.pollution * 100 | number:0}}%</span><br>
-        <span ng-mouseenter="ctrl.overlay = 'HOUSING_DESIRABILITY'" ng-mouseleave="ctrl.overlay = null">Housing desirability</span><br>
-        <span ng-mouseenter="ctrl.overlay = 'OFFICE_DESIRABILITY'" ng-mouseleave="ctrl.overlay = null">Office desirability</span>
+        <dl class="big jobspop">
+          <dt>Jobs</dt>
+          <dd>{{ctrl.city.jobs | number}}</dd>
+          <dt>Population</dt>
+          <dd>{{ctrl.city.population | number}}</dd>
+        </dl>
+        <h2>Statistics <small>(hover for data overlay)</small></h2>
+        <dl>
+          <dt overlay="OCCUPANCY">Occupancy</dt>
+          <dd overlay="OCCUPANCY">{{ctrl.city.occupancy * 100 | number:0}}%</dd>
+          <dt overlay="EMPLOYMENT">Employment</dt>
+          <dd overlay="EMPLOYMENT">{{ctrl.city.employment * 100 | number:0}}%</dd>
+          <dt overlay="VACANCY">Jobs filled</dt>
+          <dd overlay="VACANCY">{{ctrl.city.jobsFilled * 100 | number:0}}%</dd>
+          <dt overlay="TRAFFIC">Traffic</dt>
+          <dd overlay="TRAFFIC">{{ctrl.city.traffic / 250 * 100 | number:0}}%</dd>
+          <dt overlay="COMMUTE">Commute time</dt>
+          <dd overlay="COMMUTE">{{ctrl.city.commuteTime | number:0}} min</dd>
+          <dt overlay="POLLUTION">Pollution</dt>
+          <dd overlay="POLLUTION">{{ctrl.city.pollution * 100 | number:0}}%</dd>
+        </dl>
       </div>
     </div>
     <footer>

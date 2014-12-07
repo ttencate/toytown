@@ -13,6 +13,17 @@ function offable() {
         }
         e.preventDefault();
       });
-    },
-  }
+    }
+  };
+}
+
+function overlay() {
+  return {
+    link: function(scope, element, attrs) {
+      var overlay = attrs['overlay'];
+      element.on('mouseenter', function() { scope['ctrl'].overlay = overlay; });
+      element.on('mouseleave', function() { scope['ctrl'].overlay = null; });
+      element.addClass('overlay');
+    }
+  };
 }

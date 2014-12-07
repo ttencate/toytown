@@ -212,11 +212,14 @@ class City {
   population = 0;
   jobs = 0;
   employments = 0;
-  unemployment = 0;
+  employment = 0;
   numHouses = 0;
   numOffices = 0;
   pollution = 0;
   commuteTime = 0;
+  occupancy = 0;
+  jobsFilled = 0;
+  traffic = 0;
 
   housingDemand = 0;
   officesDemand = 0;
@@ -569,10 +572,13 @@ class City {
     this.numOffices = 0;
     this.pollution = 0;
     this.commuteTime = 0;
+    this.traffic = 0;
+    var maxPopulation = 0;
+    var numRoads = 0;
     this.forEachCell((coord, cell) => {
-      this.population += cell.population;
-      this.jobs += cell.maxJobs();
       if (cell.type == CellType.ROAD) {
+        numRoads++;
+        this.traffic += cell.traffic;
         this.roadMaintenanceCost += ROAD_MAINTENANCE_COST + CAR_MAINTENANCE_COST * cell.traffic;
       }
 
@@ -581,10 +587,13 @@ class City {
       if (cell.type == CellType.HOUSE) {
         this.commuteTime += cell.commuteTime;
         this.numHouses++;
+        this.population += cell.population;
+        maxPopulation += cell.maxPopulation();
         cell.houseness = 1;
       }
       if (cell.type == CellType.OFFICE) {
         this.numOffices++;
+        this.jobs += cell.maxJobs();
         cell.officeness = 1;
       }
       cell.traffic = Math.round(cell.trafficSamples * this.employments / TRAFFIC_FALLOFF);
@@ -611,7 +620,10 @@ class City {
     });
     this.pollution /= this.numHouses + this.numOffices;
     this.commuteTime /= this.numHouses;
-    this.unemployment = 1 - this.employments / this.population;
+    this.employment = this.employments / this.population;
+    this.occupancy = this.population / maxPopulation;
+    this.jobsFilled = this.employments / this.jobs;
+    this.traffic /= numRoads;
 
     for (var mod = 0; mod < 2; mod++) {
       this.forEachCell((coord, cell) => {

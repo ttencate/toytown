@@ -1,5 +1,9 @@
 @import 'bourbon';
 
+$hpadding: 2rem;
+$vpadding: 1.5rem;
+$borderColor: #334;
+
 * {
   @include box-sizing(border-box);
 }
@@ -22,10 +26,40 @@ body {
 h1 {
   font-weight: bold;
   font-size: 2rem;
+  letter-spacing: 1em;
   line-height: 2rem;
-  text-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  text-shadow: 2px 2px 4px #000;
   margin: 0;
-  padding: 0;
+  padding: 1rem 0;
+  border-top: 1px solid $borderColor;
+  width: 36rem;
+}
+
+.topline1 {
+  padding: 1rem 0;
+  border-top: 1px solid $borderColor;
+  width: 27.5rem;
+}
+
+.topline2 {
+  padding: 1rem 0;
+  border-top: 1px solid $borderColor;
+  width: 15rem;
+}
+
+.date {
+  margin-top: -0.5rem;
+}
+
+.big {
+  font-size: 140%;
+}
+
+.restart {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 80%;
+  opacity: 0.6;
 }
 
 @-webkit-keyframes flash {
@@ -47,7 +81,6 @@ h1 {
 
 .button {
   display: inline-block;
-  background: url(buttons.png);
   cursor: pointer;
 
   background-color: #445;
@@ -62,24 +95,27 @@ h1 {
 }
 
 .build {
-  width: 60px;
-  height: 60px;
-  border-radius: 5px;
+  width: 4.3rem;
+  height: 4.3rem;
   box-shadow: 1px 1px 4px rgba(255,255,240,0.5) inset, -1px -1px 4px rgba(0,0,0,0.7) inset;
+  background-image: url(buttons.png);
+  background-size: 400% 100%;
 
   &.selected {
     box-shadow: -2px -2px 4px rgba(255,255,240,0.5) inset, 2px 2px 4px rgba(0,0,0,0.7) inset;
   }
 }
 
-.house { background-position: 0 0; }
-.office { background-position: -60px 0; }
-.road { background-position: -120px 0; }
-.destroy { background-position: -240px 0; }
+.house { background-position: 0 0; border-radius: 0.5rem 0 0 0.5rem; }
+.office { background-position: -100% 0; }
+.road { background-position: -200% 0; }
+.destroy { background-position: -300% 0; border-radius: 0 0.5rem 0.5rem 0; margin-left: 0.5rem }
 
 .speed {
-  width: 30px;
-  height: 20px;
+  width: 3rem;
+  height: 2rem;
+  background-image: url(speed.png);
+  background-size: 400% 100%;
   box-shadow: 1px 1px 2px rgba(255,255,240,0.2) inset, -1px -1px 2px rgba(0,0,0,0.5) inset;
 
   &:active {
@@ -91,14 +127,88 @@ h1 {
   }
 }
 
-.speed0 { background-position: 0 -60px; border-radius: 5px 0 0 5px; }
-.speed1 { background-position: -30px -60px; }
-.speed2 { background-position: -60px -60px; }
-.speed3 { background-position: -90px -60px; border-radius: 0 5px 5px 0; }
+.speed0 { background-position: 0 -300%; border-radius: 0.5rem 0 0 0.5rem; }
+.speed1 { background-position: -100% -300%; }
+.speed2 { background-position: -200% -300%; }
+.speed3 { background-position: -300% -300%; border-radius: 0 0.5rem 0.5rem 0; }
 
 input[type="radio"] {
   position: absolute;
   left: -9999px;
+}
+
+h2 {
+  font-weight: bold;
+  font-size: 120%;
+  text-align: right;
+  margin: 1rem 0 0.2rem;
+}
+
+.celltype {
+  position: absolute;
+  top: $vpadding;
+  height: 7rem;
+  right: 23rem;
+  border-right: 1px solid $borderColor;
+  padding: 0 4rem 0;
+}
+
+.stats {
+  margin: 0 0 2rem;
+  padding: 0 0 2rem;
+  border-bottom: 1px solid $borderColor;
+}
+
+small {
+  font-weight: normal;
+}
+
+.overlay {
+  cursor: default;
+  &:hover {
+    text-shadow: 0 0 3px #ffb;
+  }
+}
+
+.jobspop {
+  position: absolute;
+  right: 22rem;
+  bottom: $vpadding;
+  padding-right: 1.5rem;
+  padding-top: 5rem;
+  border-right: 1px solid $borderColor;
+  dt {
+    width: 6em;
+    text-align: right;
+  }
+  dd {
+    margin-left: 6em;
+  }
+}
+
+dl {
+  margin: 0;
+  padding: 0;
+}
+
+dt {
+  display: block;
+  float: left;
+  width: 12em;
+  &:after {
+    content: ':';
+  }
+}
+
+dd {
+  display: block;
+  margin-left: 12em;
+  min-width: 4em;
+  text-align: right;
+}
+
+.sumline {
+  border-top: 1px solid $borderColor;
 }
 
 #all {
@@ -111,14 +221,13 @@ input[type="radio"] {
 
 .corner {
   position: absolute;
-  padding: 1.5rem 2.5rem;
+  padding: $vpadding $hpadding;
 }
 .triangle {
   position: absolute;
   display: block;
   content: '';
   border-style: solid;
-  border-color: red;
   width: 0;
   height: 0;
 }

@@ -213,10 +213,10 @@ class GameCtrl {
               this.shake(1);
               this.smoke(coord, 4);
               this.builtSomething = true;
+            } else {
+              this.assets.noCash.play();
+              this.flashCash();
             }
-          } else {
-            this.assets.noCash.play();
-            this.flashCash();
           }
           break;
         default:
@@ -410,6 +410,7 @@ class GameCtrl {
         this.city.contracts.byEmployer(this.highlight).forEach((contract) => {
           this.renderer.drawSprite(contract.employee, this.assets.highlight, 2);
         });
+        this.renderer.drawInfoLine(this.highlight);
       } else {
         if ((this.buildMode() == CellType.GRASS) != (this.highlightedCell.type == CellType.GRASS)) {
           this.renderer.drawSprite(this.highlight, this.assets.highlight,
@@ -501,5 +502,6 @@ class GameCtrl {
 
 angular.module('toytown', [])
   .controller('GameCtrl', GameCtrl)
-  .directive('offable', offable);
+  .directive('offable', offable)
+  .directive('overlay', overlay);
 angular.bootstrap(document, ['toytown']);
