@@ -83,6 +83,7 @@ class GameCtrl {
 
   city: City;
   overlay: string = null;
+  tutorialStep = 0;
 
   private shakeDelta: number = null;
   private highlight: Coord;
@@ -119,6 +120,7 @@ class GameCtrl {
 
   reset() {
     this.city = new City();
+    this.tutorialStep = 0;
   }
 
   steal() {
@@ -419,7 +421,59 @@ class GameCtrl {
       }
     }
 
+    this.advanceTutorial();
+
     requestAnimationFrame(this.frame.bind(this));
+  }
+
+  private advanceTutorial() {
+    switch (this.tutorialStep) {
+      case 0:
+        if (this.city.numHouses >= 4) {
+          this.tutorialStep++;
+        }
+        break;
+      case 1:
+        if (this.city.numOffices >= 2) {
+          this.tutorialStep++;
+        }
+        break;
+      case 2:
+        if (this.city.numRoads >= 3) {
+          this.tutorialStep++;
+        }
+        break;
+      case 3:
+        if (this.city.taxRate <= 15) {
+          this.tutorialStep++;
+        }
+        break;
+      case 4:
+        if (this.city.numHouses >= 6) {
+          this.tutorialStep++;
+        }
+        break;
+      case 5:
+        if (this.city.numOffices >= 3) {
+          this.tutorialStep++;
+        }
+        break;
+      case 6:
+        if (this.city.numRoads >= 5) {
+          this.tutorialStep++;
+        }
+        break;
+      case 7:
+        if (this.city.taxRate >= 20) {
+          this.tutorialStep++;
+        }
+        break;
+      case 8:
+        if (this.city.population >= 50) {
+          this.tutorialStep = null;
+        }
+        break;
+    }
   }
 
   private backToFront(callback: (coord: Coord, cell: Cell) => void) {

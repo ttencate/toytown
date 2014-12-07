@@ -84,7 +84,7 @@
           </dl>
         </div>
       </div>
-      <div class="corner bottomleft ng-cloak">
+      <div class="corner bottomleft ng-cloak" ng-hide="ctrl.tutorialStep < 3">
         <div ng-click="ctrl.steal()" class="big">
           Cash:<br>
           <span ng-class="{'cash-flashing': ctrl.cashFlashing}">Ŧ&nbsp;{{ctrl.city.cash | number}}</span>
@@ -110,7 +110,7 @@
           <dd overlay="OFFICE_DESIRABILITY">{{ctrl.city.officesDemand * 100 | number:0}}%</dd>
         </dl>
       </div>
-      <div class="corner bottomright ng-cloak">
+      <div class="corner bottomright ng-cloak" ng-hide="ctrl.tutorialStep < 4">
         <dl class="big jobspop">
           <dt>Jobs</dt>
           <dd>{{ctrl.city.jobs | number}}</dd>
@@ -132,6 +132,36 @@
           <dt overlay="POLLUTION">Pollution</dt>
           <dd overlay="POLLUTION">{{ctrl.city.pollution * 100 | number:0}}%</dd>
         </dl>
+      </div>
+      <div class="tutorial" ng-if="ctrl.tutorialStep != null" ng-switch="ctrl.tutorialStep">
+        <div ng-switch-when="0">
+          <strong>Welcome to Toytown!</strong><br>
+          Let's start by building some houses. Next to the forest would be a nice place to live!
+        </div>
+        <div ng-switch-when="1">
+          Everyone in Toytown wants to work, but they don't want to live next to office buildings. Build two offices, about three blocks away.
+        </div>
+        <div ng-switch-when="2">
+          Watch how the people and businesses trickle in. Build a road to speed up the commute.
+        </div>
+        <div ng-switch-when="3">
+          Note the demand meters in the bottom left. Let's lower the tax rate to 15% to attract more people.
+        </div>
+        <div ng-switch-when="4">
+          Looking good! We still have some cash, so we can build a few more houses.
+        </div>
+        <div ng-switch-when="5">
+          Observe how unemployment grew when new people moved in. Build another office block to counteract.
+        </div>
+        <div ng-switch-when="6">
+         Find out where the long commutes are and build roads to shorten them. Build next to trees if you can; they clean up the pollution from the traffic.
+        </div>
+        <div ng-switch-when="7">
+          Road maintenance costs money. Take care at all times to keep a healthy cashflow going. Set the tax rate back to 20%.
+        </div>
+        <div ng-switch-when="8">
+          Reach a population of 50 to conclude the tutorial. Then, keep going and see how big your Toytown can get!
+        </div>
       </div>
     </div>
     <footer>

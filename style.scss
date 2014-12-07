@@ -165,6 +165,22 @@ h2 {
   border-bottom: 1px solid $borderColor;
 }
 
+.tutorial {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 9rem;
+  margin: 0 30rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: rgba(0, 0, 0, 0.3);
+  font-size: 120%;
+  letter-spacing: 0.05em;
+  line-height: 140%;
+  text-shadow: 2px 2px 4px #000;
+  text-align: center;
+}
+
 small {
   font-weight: normal;
 }
