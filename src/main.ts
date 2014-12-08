@@ -3,7 +3,7 @@
 /// <reference path="dom.ts" />
 /// <reference path="renderer.ts" />
 
-var DEBUG = true; // TODO switch to false for launch
+var DEBUG = false;
 
 window.requestAnimationFrame =
   window['requestAnimationFrame'] ||
