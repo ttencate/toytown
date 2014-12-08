@@ -207,6 +207,8 @@ class City {
   private grid: Array<Array<Cell>>;
   contracts = new Contracts();
 
+  tutorialStep = 0;
+
   tickCount = 0;
 
   population = 0;

@@ -46,6 +46,7 @@ class Assets {
   buildRoad = loadSound('road');
   destroy = loadSound('destroy');
   noCash = loadSound('nocash');
+  tutorial = loadSound('tutorial');
 }
 
 class Particle {
@@ -83,7 +84,6 @@ class GameCtrl {
 
   city: City;
   overlay: string = null;
-  tutorialStep = 0;
 
   private shakeDelta: number = null;
   private highlight: Coord;
@@ -120,7 +120,6 @@ class GameCtrl {
 
   reset() {
     this.city = new City();
-    this.tutorialStep = 0;
   }
 
   steal() {
@@ -427,50 +426,58 @@ class GameCtrl {
   }
 
   private advanceTutorial() {
-    switch (this.tutorialStep) {
+    switch (this.city.tutorialStep) {
       case 0:
         if (this.city.numHouses >= 4) {
-          this.tutorialStep++;
+          this.city.tutorialStep++;
+          this.assets.tutorial.play();
         }
         break;
       case 1:
         if (this.city.numOffices >= 2) {
-          this.tutorialStep++;
+          this.city.tutorialStep++;
+          this.assets.tutorial.play();
         }
         break;
       case 2:
         if (this.city.numRoads >= 3) {
-          this.tutorialStep++;
+          this.city.tutorialStep++;
+          this.assets.tutorial.play();
         }
         break;
       case 3:
         if (this.city.taxRate <= 15) {
-          this.tutorialStep++;
+          this.city.tutorialStep++;
+          this.assets.tutorial.play();
         }
         break;
       case 4:
         if (this.city.numHouses >= 6) {
-          this.tutorialStep++;
+          this.city.tutorialStep++;
+          this.assets.tutorial.play();
         }
         break;
       case 5:
         if (this.city.numOffices >= 3) {
-          this.tutorialStep++;
+          this.city.tutorialStep++;
+          this.assets.tutorial.play();
         }
         break;
       case 6:
         if (this.city.numRoads >= 5) {
-          this.tutorialStep++;
+          this.city.tutorialStep++;
+          this.assets.tutorial.play();
         }
         break;
       case 7:
         if (this.city.taxRate >= 20) {
-          this.tutorialStep++;
+          this.city.tutorialStep++;
+          this.assets.tutorial.play();
         }
         break;
       case 8:
         if (this.city.population >= 50) {
-          this.tutorialStep = null;
+          this.city.tutorialStep = null;
         }
         break;
     }

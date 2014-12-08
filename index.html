@@ -85,7 +85,7 @@
           </dl>
         </div>
       </div>
-      <div class="corner bottomleft ng-cloak" ng-hide="ctrl.tutorialStep < 3">
+      <div class="corner bottomleft ng-cloak" ng-hide="ctrl.city.tutorialStep != null && ctrl.city.tutorialStep < 3">
         <div ng-click="ctrl.steal()" class="big">
           Cash:<br>
           <span ng-class="{'cash-flashing': ctrl.cashFlashing}">Ŧ&nbsp;{{ctrl.city.cash | number}}</span>
@@ -111,7 +111,7 @@
           <dd overlay="OFFICE_DESIRABILITY">{{ctrl.city.officesDemand * 100 | number:0}}%</dd>
         </dl>
       </div>
-      <div class="corner bottomright ng-cloak" ng-hide="ctrl.tutorialStep < 4">
+      <div class="corner bottomright ng-cloak" ng-hide="ctrl.city.tutorialStep != null && ctrl.city.tutorialStep < 5">
         <dl class="big jobspop">
           <dt>Jobs</dt>
           <dd>{{ctrl.city.jobs | number}}</dd>
@@ -134,7 +134,7 @@
           <dd overlay="POLLUTION">{{ctrl.city.pollution * 100 | number:0}}%</dd>
         </dl>
       </div>
-      <div class="tutorial" ng-if="ctrl.tutorialStep != null" ng-switch="ctrl.tutorialStep">
+      <div class="tutorial" ng-if="ctrl.city.tutorialStep != null" ng-switch="ctrl.city.tutorialStep">
         <div ng-switch-when="0">
           <strong>Welcome to Toytown!</strong><br>
           Let's start by building some houses. Next to the forest would be a nice place to live!
@@ -152,7 +152,7 @@
           Looking good! We still have some cash, so we can build a few more houses.
         </div>
         <div ng-switch-when="5">
-          Observe how unemployment grew when new people moved in. Build another office block to counteract.
+          Observe how unemployment grew when new people moved in. Build another office block to provide more jobs.
         </div>
         <div ng-switch-when="6">
          Find out where the long commutes are and build roads to shorten them. Build next to trees if you can; they clean up the pollution from the traffic.
