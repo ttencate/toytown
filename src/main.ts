@@ -2,8 +2,10 @@
 /// <reference path="city.ts" />
 /// <reference path="dom.ts" />
 /// <reference path="renderer.ts" />
+/// <reference path="renderer_2d.ts" />
+/// <reference path="renderer_webgl.ts" />
 
-var DEBUG = false;
+var DEBUG = true; // TODO switch to false for launch
 
 window.requestAnimationFrame =
   window['requestAnimationFrame'] ||
@@ -97,7 +99,7 @@ class GameCtrl {
     } else {
       this.city = new City();
     }
-    this.renderer = new Renderer(this.city, this.canvas);
+    this.renderer = new Renderer2D(this.city, this.canvas);
 
     var all = $('#all');
     all.on('mousemove', this.mouseMove.bind(this));
@@ -348,7 +350,7 @@ class GameCtrl {
     this.backToFront(this.drawContents.bind(this));
     if (this.shortestPath) {
       for (var i = 0; i < this.shortestPath.length; i++) {
-        this.renderer.drawSprite(this.shortestPath[i], this.assets.highlight, 1);
+        this.renderer.drawSprite(this.shortestPath[i], this.assets.highlight, 1, 0, 0, 0, 1);
       }
     }
     if (this.overlay) {
@@ -356,49 +358,49 @@ class GameCtrl {
         case 'OCCUPANCY':
           this.backToFront((coord, cell) => {
             this.renderer.drawSprite(coord, this.assets.overlay, 0,
-              Math.min(7, Math.ceil(7 * (1 - cell.population / cell.maxPopulation()))));
+              Math.min(7, Math.ceil(7 * (1 - cell.population / cell.maxPopulation()))), 0, 0, 1);
           });
           break;
         case 'UNEMPLOYMENT':
           this.backToFront((coord, cell) => {
             this.renderer.drawSprite(coord, this.assets.overlay, 0,
-              Math.min(7, Math.ceil(7 * (1 - cell.employers / cell.population))));
+              Math.min(7, Math.ceil(7 * (1 - cell.employers / cell.population))), 0, 0, 1);
           });
           break;
         case 'VACANCY':
           this.backToFront((coord, cell) => {
             this.renderer.drawSprite(coord, this.assets.overlay, 0,
-              Math.min(7, Math.ceil(7 * (1 - cell.employees / cell.maxJobs()))));
+              Math.min(7, Math.ceil(7 * (1 - cell.employees / cell.maxJobs()))), 0, 0, 1);
           });
           break;
         case 'TRAFFIC':
           this.backToFront((coord, cell) => {
             this.renderer.drawSprite(coord, this.assets.overlay, 0,
-              Math.min(7, Math.ceil(7 * cell.traffic / ROAD_CAPACITY)));
+              Math.min(7, Math.ceil(7 * cell.traffic / ROAD_CAPACITY)), 0, 0, 1);
           });
           break;
         case 'COMMUTE':
           this.backToFront((coord, cell) => {
             this.renderer.drawSprite(coord, this.assets.overlay, 0,
-              Math.min(7, Math.ceil(7 * cell.commuteTime / MAX_COMMUTE_TIME)));
+              Math.min(7, Math.ceil(7 * cell.commuteTime / MAX_COMMUTE_TIME)), 0, 0, 1);
           });
           break;
         case 'POLLUTION':
           this.backToFront((coord, cell) => {
             this.renderer.drawSprite(coord, this.assets.overlay, 0,
-              Math.min(7, Math.ceil(7 * cell.pollution)));
+              Math.min(7, Math.ceil(7 * cell.pollution)), 0, 0, 1);
           });
           break;
         case 'HOUSING_DESIRABILITY':
           this.backToFront((coord, cell) => {
             this.renderer.drawSprite(coord, this.assets.overlay, 0,
-              Math.min(7, Math.ceil(0.0001 + 7 * (1 - cell.houseDesirability))));
+              Math.min(7, Math.ceil(0.0001 + 7 * (1 - cell.houseDesirability))), 0, 0, 1);
           });
           break;
         case 'OFFICE_DESIRABILITY':
           this.backToFront((coord, cell) => {
             this.renderer.drawSprite(coord, this.assets.overlay, 0,
-              Math.min(7, Math.ceil(0.0001 + 7 * (1 - cell.officeDesirability))));
+              Math.min(7, Math.ceil(0.0001 + 7 * (1 - cell.officeDesirability))), 0, 0, 1);
           });
           break;
       }
@@ -406,16 +408,15 @@ class GameCtrl {
     if (this.highlight) {
       if (this.buildMode() == null) {
         this.city.contracts.byEmployee(this.highlight).forEach((contract) => {
-          this.renderer.drawSprite(contract.employer, this.assets.highlight, 1);
+          this.renderer.drawSprite(contract.employer, this.assets.highlight, 1, 0, 0, 0, 1);
         });
         this.city.contracts.byEmployer(this.highlight).forEach((contract) => {
-          this.renderer.drawSprite(contract.employee, this.assets.highlight, 2);
+          this.renderer.drawSprite(contract.employee, this.assets.highlight, 2, 0, 0, 0, 1);
         });
-        this.renderer.drawInfoLine(this.highlight);
       } else {
         if ((this.buildMode() == CellType.GRASS) != (this.highlightedCell.type == CellType.GRASS)) {
           this.renderer.drawSprite(this.highlight, this.assets.highlight,
-              BUILD_COSTS[this.buildMode()] <= this.city.cash ? 0 : 2);
+              BUILD_COSTS[this.buildMode()] <= this.city.cash ? 0 : 2, 0, 0, 0, 1);
         }
       }
     }
@@ -499,29 +500,28 @@ class GameCtrl {
   }
 
   private drawGround(coord: Coord, cell: Cell) {
-    this.renderer.drawSprite(coord, this.assets.underground);
+    this.renderer.drawSprite(coord, this.assets.underground, 0, 0, 0, 0, 1);
     switch (cell.type) {
       case CellType.GRASS:
-        this.renderer.drawSprite(coord, this.assets.ground, 0);
+        this.renderer.drawSprite(coord, this.assets.ground, 0, 0, 0, 0, 1);
         break;
       case CellType.HOUSE:
-        this.renderer.drawSprite(coord, this.assets.ground, 1);
+        this.renderer.drawSprite(coord, this.assets.ground, 1, 0, 0, 0, 1);
         break;
       case CellType.OFFICE:
-        this.renderer.drawSprite(coord, this.assets.ground, 2);
+        this.renderer.drawSprite(coord, this.assets.ground, 2, 0, 0, 0, 1);
         break;
       case CellType.ROAD:
-        this.renderer.drawSprite(coord, this.assets.ground, 1);
+        this.renderer.drawSprite(coord, this.assets.ground, 1, 0, 0, 0, 1);
         var n = this.city.getCellOrDefault(coord.offset(-1, 0)).type == CellType.ROAD;
         var e = this.city.getCellOrDefault(coord.offset(0, 1)).type == CellType.ROAD;
         var s = this.city.getCellOrDefault(coord.offset(1, 0)).type == CellType.ROAD;
         var w = this.city.getCellOrDefault(coord.offset(0, -1)).type == CellType.ROAD;
         this.renderer.drawSprite(coord, this.assets.road,
-            (n?1:0) + (e?2:0),
-            (s?1:0) + (w?2:0));
+            (n?1:0) + (e?2:0), (s?1:0) + (w?2:0), 0, 0, 1);
         break;
       case CellType.TREES:
-        this.renderer.drawSprite(coord, this.assets.ground, cell.stage == 0 ? 3 : 0);
+        this.renderer.drawSprite(coord, this.assets.ground, cell.stage == 0 ? 3 : 0, 0, 0, 0, 1);
         break;
     }
   }
@@ -529,21 +529,21 @@ class GameCtrl {
   private drawContents(coord: Coord, cell: Cell) {
     switch (cell.type) {
       case CellType.HOUSE:
-        this.renderer.drawSprite(coord, this.assets.house, cell.stage);
+        this.renderer.drawSprite(coord, this.assets.house, cell.stage, 0, 0, 0, 1);
         break;
       case CellType.OFFICE:
-        this.renderer.drawSprite(coord, this.assets.office, cell.stage);
+        this.renderer.drawSprite(coord, this.assets.office, cell.stage, 0, 0, 0, 1);
         break;
       case CellType.ROAD:
         var frame = Math.floor(this.city.tickCount % 100 / 25)
         for (var i = 0; i < 8; i++) {
           if (cell.cars & (1 << i)) {
-            this.renderer.drawSprite(coord, this.assets.traffic, i >> 1, 4 * (i & 1) + frame);
+            this.renderer.drawSprite(coord, this.assets.traffic, i >> 1, 4 * (i & 1) + frame, 0, 0, 1);
           }
         }
         break;
       case CellType.TREES:
-        this.renderer.drawSprite(coord, this.assets.trees, cell.stage);
+        this.renderer.drawSprite(coord, this.assets.trees, cell.stage, 0, 0, 0, 1);
         break;
     }
     var particles = this.particles[coord.asString];
