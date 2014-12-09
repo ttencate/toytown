@@ -99,7 +99,12 @@ class GameCtrl {
     } else {
       this.city = new City();
     }
-    this.renderer = new Renderer2D(this.city, this.canvas);
+    try {
+      this.renderer = new RendererWebGL(this.city, this.canvas);
+    } catch (ex) {
+      console.error('WebGL error, falling back to 2d renderer', ex);
+      this.renderer = new Renderer2D(this.city, this.canvas);
+    }
 
     var all = $('#all');
     all.on('mousemove', this.mouseMove.bind(this));
@@ -420,6 +425,8 @@ class GameCtrl {
         }
       }
     }
+
+    this.renderer.flush();
 
     this.advanceTutorial();
 

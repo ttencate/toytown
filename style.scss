@@ -6,6 +6,7 @@ $borderColor: #334;
 
 * {
   @include box-sizing(border-box);
+  outline: 0;
 }
 
 html {

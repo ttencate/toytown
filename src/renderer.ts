@@ -3,9 +3,12 @@
 
 interface Renderer {
   shakeOffset: number;
+
   clear();
   setAlpha(alpha: number);
   drawSprite(coord: Coord, sprite: Sprite, variantX: number, variantY: number, ox: number, oy: number, scale: number);
+  flush();
+
   unproject(x: number, y: number): Coord;
 }
 

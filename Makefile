@@ -1,3 +1,6 @@
+%.premult.png: %.png
+	convert $< \( +clone -alpha Extract \) -channel RGB -compose Multiply -composite $@
+
 %.png: %.svg
 	inkscape --without-gui --export-png=$@ --export-area-page $<
 

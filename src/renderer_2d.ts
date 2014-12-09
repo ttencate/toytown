@@ -27,4 +27,7 @@ class Renderer2D extends AbstractRenderer {
         y + this.scale * (oy - scale * sprite.oy),
         this.scale * scale * sprite.w, this.scale * scale * sprite.h);
   }
+
+  flush() {
+  }
 }
